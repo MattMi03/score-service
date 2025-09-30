@@ -20,6 +20,8 @@ import java.util.Map;
 @Schema(description = "成绩查询响应")
 public class GradeQueryVO {
 
+    private String xxdm; // [NEW] 新增此字段，用于权限过滤
+
     @Schema(description = "考籍号", example = "00001")
     private String ksh;
 

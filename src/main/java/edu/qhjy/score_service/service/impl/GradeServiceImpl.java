@@ -25,7 +25,6 @@ import java.util.List;
 public class GradeServiceImpl implements GradeService {
 
     private final KscjMapper kscjMapper;
-    private final KskmxxMapper kskmxxMapper;
     private final SubjectCacheService subjectCacheService;
 
     @Override

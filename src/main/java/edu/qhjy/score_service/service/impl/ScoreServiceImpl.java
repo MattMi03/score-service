@@ -8,14 +8,16 @@ import edu.qhjy.score_service.domain.entity.KscjEntity;
 import edu.qhjy.score_service.domain.entity.KsjhEntity;
 import edu.qhjy.score_service.domain.entity.KskmxxEntity;
 import edu.qhjy.score_service.domain.vo.*;
-import edu.qhjy.score_service.mapper.primary.*;
+import edu.qhjy.score_service.mapper.primary.KscjMapper;
+import edu.qhjy.score_service.mapper.primary.KsjhMapper;
+import edu.qhjy.score_service.mapper.primary.KskmxxMapper;
+import edu.qhjy.score_service.mapper.primary.YjxhMapper;
 import edu.qhjy.score_service.service.ScoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.aop.framework.AopContext;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -44,75 +46,12 @@ public class ScoreServiceImpl implements ScoreService {
     private final KskmxxMapper kskmxxMapper;
     private final KscjMapper kscjMapper;
     private final YjxhMapper yjxhMapper;
-    private final KqxxMapper kqxxMapper;
-    private final XxjbxxMapper xxjbxxMapper;
 
     // 二级数据源相关Mapper
     private final KsjhMapper ksjhMapper;
 
     // Redis模板
     private final RedisTemplate<String, Object> redisTemplate;
-
-    private ScoreStatisticsVO calculateStatistics(String kmmc) {
-        List<KscjEntity> scores = kscjMapper.selectByKmmc(kmmc);
-
-        if (scores.isEmpty()) {
-            return new ScoreStatisticsVO();
-        }
-
-        ScoreStatisticsVO statistics = new ScoreStatisticsVO();
-
-        List<BigDecimal> scoreList = scores.stream()
-                .map(KscjEntity::getFslkscj)
-                .filter(Objects::nonNull)
-                .map(BigDecimal::new)
-                .toList();
-
-        if (!scoreList.isEmpty()) {
-            // 计算基本统计信息
-            BigDecimal sum = scoreList.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-            statistics.setAverageScore(sum.divide(BigDecimal.valueOf(scoreList.size()), 2, RoundingMode.HALF_UP));
-            statistics.setMaxScore(scoreList.stream().max(BigDecimal::compareTo).orElse(BigDecimal.ZERO));
-            statistics.setMinScore(scoreList.stream().min(BigDecimal::compareTo).orElse(BigDecimal.ZERO));
-
-            // 计算合格率
-            long passCount = scores.stream()
-                    .filter(s -> "合格".equals(s.getCjhgm()))
-                    .count();
-            statistics.setPassCount((int) passCount);
-            statistics.setFailCount(scores.size() - (int) passCount);
-            statistics.setPassRate(BigDecimal.valueOf(passCount)
-                    .divide(BigDecimal.valueOf(scores.size()), 4, RoundingMode.HALF_UP)
-                    .multiply(BigDecimal.valueOf(100)));
-
-            // 计算分数段分布
-            Map<String, Integer> distribution = new LinkedHashMap<>();
-            distribution.put("90-100", 0);
-            distribution.put("80-89", 0);
-            distribution.put("70-79", 0);
-            distribution.put("60-69", 0);
-            distribution.put("0-59", 0);
-
-            for (BigDecimal score : scoreList) {
-                // 成绩数据在导入时已经四舍五入为整数，直接转换
-                int s = score.intValue();
-                if (s >= 90) {
-                    distribution.put("90-100", distribution.get("90-100") + 1);
-                } else if (s >= 80) {
-                    distribution.put("80-89", distribution.get("80-89") + 1);
-                } else if (s >= 70) {
-                    distribution.put("70-79", distribution.get("70-79") + 1);
-                } else if (s >= 60) {
-                    distribution.put("60-69", distribution.get("60-69") + 1);
-                } else {
-                    distribution.put("0-59", distribution.get("0-59") + 1);
-                }
-            }
-            statistics.setScoreDistribution(distribution);
-        }
-
-        return statistics;
-    }
 
     @Override
     public List<KskmxxEntity> listTemplates() {
@@ -407,55 +346,42 @@ public class ScoreServiceImpl implements ScoreService {
     }
 
     @Override
-    public List<AreaHierarchyVO> getAreaHierarchyEnhanced(String parentArea, String areaType) {
-        log.info("[Service层] 获取增强区域层级数据：上级区域={}, 区域类型={}", parentArea, areaType);
+    public List<AreaHierarchyVO> getAreaHierarchyEnhanced(String parentArea, String areaType, String dm) {
+        log.info("[Service层] 获取增强区域层级数据：上级区域={}, 区域类型={}, 权限DM={}", parentArea, areaType, dm);
 
-        if ("class".equalsIgnoreCase(areaType)) {
-            if (parentArea == null || parentArea.length() < 13) { // 9位xxdm + 4位年级
-                throw new IllegalArgumentException("班级区域类型必须指定完整的学校代码+年级，例如'6323210312024'");
+        // 规则：用户只能查询与自己相关的区域（上级、自身、或下级）。
+        // 实现：检查parentArea和dm是否在同一个层级链上。
+        // 'qhs' 是特殊用户，跳过此校验。
+        if (parentArea != null && !parentArea.isEmpty() &&
+                dm != null && !dm.equalsIgnoreCase("qhs")) {
+
+            // 如果用户的DM不是以请求区域开头，并且请求区域也不是以用户的DM开头，则说明无权限
+            if (!dm.startsWith(parentArea) && !parentArea.startsWith(dm)) {
+                log.warn("权限不足：用户DM '{}' 与请求的区域 '{}' 不在同一层级链上", dm, parentArea);
+                throw new SecurityException("权限不足，您无权查询该区域。");
             }
         }
+        // --- [NEW] 权限校验逻辑结束 ---
 
-        try {
-            // 验证areaType是否为有效的区域级别
-            if (!isValidAreaLevel(areaType)) {
-                log.warn("无效的区域类型: {}, 使用默认值 'city'", areaType);
-                areaType = "city";
-            }
-
-            // 兼容code参数：如果parentArea是code，转换为name
-            String actualParentArea = convertCodeToNameIfNeeded(parentArea, getParentAreaType(areaType));
-            log.info("原始parentArea: {}, 转换后actualParentArea: {}", parentArea, actualParentArea);
-
-            // 使用转换后的name作为缓存key，确保code和name参数使用相同的缓存
-            // 通过代理对象调用，确保@Cacheable注解生效
-            ScoreServiceImpl proxy = (ScoreServiceImpl) AopContext.currentProxy();
-            return proxy.getAreaHierarchyCached(actualParentArea, areaType);
-        } catch (Exception e) {
-            log.error("获取增强区域层级数据失败", e);
-            return new ArrayList<>();
+        if (("grade".equals(areaType) || "class".equals(areaType)) && (parentArea == null || parentArea.isEmpty())) {
+            throw new IllegalArgumentException("请先选择上一级");
         }
-    }
 
-    @Cacheable(
-            value = "score_lists",
-            key = "'area_hierarchy_enhanced_' + (#actualParentArea ?: 'all') + '_' + #areaType",
-            unless = "true"
-    )
-    public List<AreaHierarchyVO> getAreaHierarchyCached(String actualParentArea, String areaType) {
-        log.info("[缓存方法] 执行数据库查询：actualParentArea={}, areaType={}", actualParentArea, areaType);
+        // 调用Mapper方法（这部分逻辑保持不变）
+        List<Map<String, Object>> areaData = kscjMapper.selectAreaHierarchy(areaType, parentArea, dm);
 
-        List<Map<String, Object>> areaData = kscjMapper.selectAreaHierarchy(areaType, actualParentArea);
         List<AreaHierarchyVO> areas = new ArrayList<>();
+        if (areaData == null) {
+            return areas;
+        }
 
+        // 组装VO对象（这部分逻辑保持不变）
         for (Map<String, Object> row : areaData) {
             String areaCode = (String) row.get("area_code");
             String areaName = (String) row.get("area_name");
             String parentCode = (String) row.get("parent_code");
             String parentName = (String) row.get("parent_name");
             String level = (String) row.get("area_level");
-
-            // 从SQL查询结果中直接获取子级数量，避免额外查询
             Object childrenCountObj = row.get("children_count");
             Integer childrenCount = childrenCountObj != null ? ((Number) childrenCountObj).intValue() : 0;
 
@@ -466,7 +392,7 @@ public class ScoreServiceImpl implements ScoreService {
                         .level(level != null ? level : areaType)
                         .parentCode(parentCode)
                         .parentName(parentName)
-                        .hasChildren(determineHasChildren(areaType))
+                        .hasChildren(childrenCount > 0)
                         .childrenCount(childrenCount)
                         .build();
                 areas.add(areaVO);
@@ -475,65 +401,6 @@ public class ScoreServiceImpl implements ScoreService {
 
         log.info("成功获取增强区域层级数据，共 {} 个", areas.size());
         return areas;
-    }
-
-    /**
-     * 判断当前区域级别是否有下级区域
-     */
-    private Boolean determineHasChildren(String areaType) {
-        return switch (areaType) {
-            case "city" -> true; // 地市有考区
-            case "county" -> true; // 考区有学校
-            case "school" -> true; // 学校有级别
-            case "grade" -> true; // 级别有班级
-            case "class" -> false; // 班级没有下级
-            default -> false;
-        };
-    }
-
-    /**
-     * 获取下级区域数量
-     */
-    @Cacheable(value = "childrenCount", key = "#areaName + '_' + #areaType")
-    public Integer getChildrenCount(String areaName, String areaType) {
-        try {
-            String childAreaType = getChildAreaType(areaType);
-            if (childAreaType == null) {
-                return 0;
-            }
-
-            List<Map<String, Object>> childData = kscjMapper.selectAreaHierarchy(childAreaType, areaName);
-            return childData.size();
-        } catch (Exception e) {
-            log.warn("获取下级区域数量失败：{}", e.getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * 获取下级区域类型
-     */
-    private String getChildAreaType(String areaType) {
-        return switch (areaType) {
-            case "city" -> "county";
-            case "county" -> "school";
-            case "school" -> "grade";
-            case "grade" -> "class";
-            default -> null;
-        };
-    }
-
-    /**
-     * 获取父级区域类型
-     */
-    private String getParentAreaType(String areaType) {
-        return switch (areaType) {
-            case "county" -> "city";
-            case "school" -> "county";
-            case "grade" -> "school";
-            case "class" -> "grade";
-            default -> null;
-        };
     }
 
     @Override
@@ -553,145 +420,6 @@ public class ScoreServiceImpl implements ScoreService {
         }
     }
 
-    /**
-     * 验证区域级别是否有效
-     */
-    private boolean isValidAreaLevel(String areaLevel) {
-        return ("city".equals(areaLevel) || "county".equals(areaLevel) ||
-                "school".equals(areaLevel) || "grade".equals(areaLevel) || "class".equals(areaLevel));
-    }
-
-    /**
-     * 根据区域类型获取对应的code值
-     *
-     * @param areaType 区域类型
-     * @param areaName 区域名称
-     * @return 对应的code值
-     */
-    @Cacheable(value = "areaCode", key = "#areaType + '_' + #areaName")
-    public String getAreaCodeByType(String areaType, String areaName) {
-        try {
-            String result = null;
-            switch (areaType) {
-                case "city":
-                    // 从kqxx表中查询SSXZQHDM
-                    result = kqxxMapper.selectSsxzqhdmByName(areaName);
-                    log.info("查询city代码: areaName={}, result={}", areaName, result);
-                    break;
-                case "county":
-                    // 从kqxx表中查询KQDM
-                    result = kqxxMapper.selectKqdmByName(areaName);
-                    log.info("查询county代码: areaName={}, result={}", areaName, result);
-                    break;
-                case "school":
-                    // 从xxjbxx表中查询XXDM
-                    result = xxjbxxMapper.selectXxdmByName(areaName);
-                    log.info("查询school代码: areaName={}, result={}", areaName, result);
-                    break;
-                case "grade":
-                    // 年级直接使用原始值作为code
-                    result = areaName;
-                    break;
-                case "class":
-                    // 班级保持现有逻辑不变，直接返回name作为code
-                    result = areaName;
-                    break;
-                default:
-                    log.warn("未知的区域类型: {}", areaType);
-                    break;
-            }
-            return result;
-        } catch (Exception e) {
-            log.error("获取区域代码失败，areaType: {}, areaName: {}, 错误: {}", areaType, areaName, e.getMessage());
-            // 查询失败时返回null，不再使用name作为fallback
-            return null;
-        }
-    }
-
-    /**
-     * 兼容code参数：如果传入的是code，转换为name；如果是name，直接返回
-     */
-    private String convertCodeToNameIfNeeded(String parentArea, String parentAreaType) {
-        if (parentArea == null || parentAreaType == null) {
-            return parentArea;
-        }
-
-        try {
-            if ("grade".equalsIgnoreCase(parentAreaType)) {
-                // 假设前9位是学校代码，后4位是年级
-                String schoolCode = parentArea.substring(0, 9);
-                String grade = parentArea.substring(9);
-
-                String schoolName = xxjbxxMapper.selectXxmcByCode(schoolCode);
-                if (schoolName != null) {
-                    // 拼接成 class 查询用的 parentName：学校名称 + 年级
-                    return schoolName + grade;
-                } else {
-                    return parentArea;
-                }
-            }
-
-            // 原有逻辑
-            String nameFromCode = getAreaNameByCode(parentAreaType, parentArea);
-            if (nameFromCode != null) {
-                log.info("Code转换成功：{} -> {}", parentArea, nameFromCode);
-                return nameFromCode;
-            } else {
-                return parentArea;
-            }
-        } catch (Exception e) {
-            log.warn("Code转换失败，使用原值：{}, 错误: {}", parentArea, e.getMessage());
-            return parentArea;
-        }
-    }
-    /**
-     * 根据区域类型和代码获取对应的名称
-     */
-    private String getAreaNameByCode(String areaType, String areaCode) {
-        if (areaCode == null || areaType == null) {
-            return null;
-        }
-
-        try {
-            String result = null;
-            switch (areaType.toLowerCase()) {
-                case "city":
-                    result = kqxxMapper.selectSsxzqhmcByCode(areaCode);
-                    break;
-                case "county":
-                    result = kqxxMapper.selectKqmcByCode(areaCode);
-                    break;
-                case "school":
-                    result = xxjbxxMapper.selectXxmcByCode(areaCode);
-                    break;
-                case "grade":
-                    // 对于grade，name就是code本身
-                    result = areaCode;
-                    break;
-                default:
-                    log.warn("未知的区域类型: {}", areaType);
-                    break;
-            }
-            return result;
-        } catch (Exception e) {
-            log.error("根据代码获取区域名称失败，areaType: {}, areaCode: {}, 错误: {}", areaType, areaCode, e.getMessage());
-            return null;
-        }
-    }
-
-    // /**
-    // * 获取等级名称
-    // */
-    // private String getGradeName(String gradeCode) {
-    // return switch (gradeCode) {
-    // case "A" -> "优秀";
-    // case "B" -> "良好";
-    // case "C" -> "中等";
-    // case "D" -> "及格";
-    // case "E" -> "不及格";
-    // default -> gradeCode;
-    // };
-    // }
 
     /**
      * 计算趋势摘要

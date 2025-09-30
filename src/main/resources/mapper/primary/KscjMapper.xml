@@ -277,7 +277,8 @@
             TGT.gxsj = NOW()
             WHEN NOT MATCHED THEN
         INSERT (ksjhdm, ksjhmc, yjxh, kmmc, ksh, kklxmc, kmlx, fslkscj, cjfx1, cjfx2)
-            VALUES (SRC.ksjhdm, SRC.ksjhmc, SRC.yjxh, SRC.kmmc, SRC.ksh, SRC.kklxmc, SRC.kmlx, SRC.fslkscj, SRC.cjfx1, SRC.cjfx2);
+            VALUES
+        (SRC.ksjhdm, SRC.ksjhmc, SRC.yjxh, SRC.kmmc, SRC.ksh, SRC.kklxmc, SRC.kmlx, SRC.fslkscj, SRC.cjfx1, SRC.cjfx2);
     </update>
     <!-- ==================== 新增统计分析SQL ==================== -->
 
@@ -674,95 +675,86 @@
         ORDER BY ksjhdm DESC
     </select>
 
-    <!-- 查询区域层级数据 -->
     <select id="selectAreaHierarchy" resultType="java.util.Map">
         <choose>
-            <!-- 地市 -->
             <when test="areaLevel == 'city'">
                 SELECT
-                k.SSXZQHMC AS area_name,
-                k.SSXZQHDM AS area_code,
-                'city' AS area_level,
-                NULL AS parent_code,
-                NULL AS parent_name,
-                COUNT(DISTINCT k.KQMC) AS children_count
-                FROM kqxx k
-                WHERE k.SSXZQHMC IS NOT NULL
-                GROUP BY k.SSXZQHMC, k.SSXZQHDM
-                ORDER BY k.SSXZQHMC
+                t1.DM AS area_code, t1.MC AS area_name, 'city' AS area_level,
+                NULL AS parent_code, NULL AS parent_name,
+                (SELECT COUNT(*) FROM XYZDK t2 WHERE t2.JH = 'KD' AND t2.DM LIKE t1.DM || '%') AS children_count
+                FROM XYZDK t1
+                WHERE t1.JH = 'KQ'
+                <if test="dm != null and dm != '' and dm != 'qhs'">
+                    AND (t1.DM LIKE #{dm} || '%' OR #{dm} LIKE t1.DM || '%')
+                </if>
+                ORDER BY t1.DM
             </when>
 
-            <!-- 考区 / 区县 -->
             <when test="areaLevel == 'county'">
                 SELECT
-                k.KQMC AS area_name,
-                k.KQDM AS area_code,
-                k.SSXZQHMC AS parent_name,
-                k.SSXZQHDM AS parent_code,
-                'county' AS area_level,
-                COUNT(DISTINCT x.XXMC) AS children_count
-                FROM kqxx k
-                LEFT JOIN xxjbxx x ON k.KQMC = x.KQMC
-                WHERE k.KQMC IS NOT NULL
-                <if test="parentName != null and parentName != ''">
-                    AND k.SSXZQHMC = #{parentName}
+                t1.DM AS area_code, t1.MC AS area_name, 'county' AS area_level,
+                SUBSTR(t1.DM, 1, 1) AS parent_code,
+                (SELECT p.MC FROM XYZDK p WHERE p.DM = SUBSTR(t1.DM, 1, 1) AND p.JH = 'KQ') AS parent_name,
+                (SELECT COUNT(*) FROM XYZDK t2 WHERE t2.JH = 'ZX' AND t2.DM LIKE t1.DM || '%') AS children_count
+                FROM XYZDK t1
+                WHERE t1.JH = 'KD'
+                <if test="dm != null and dm != '' and dm != 'qhs'">
+                    AND (t1.DM LIKE #{dm} || '%' OR #{dm} LIKE t1.DM || '%')
                 </if>
-                GROUP BY k.KQMC, k.KQDM, k.SSXZQHMC, k.SSXZQHDM
-                ORDER BY k.KQMC
+                <if test="parentName != null and parentName != ''">
+                    AND SUBSTR(t1.DM, 1, 1) = #{parentName}
+                </if>
+                ORDER BY t1.DM
             </when>
 
-            <!-- 学校 -->
             <when test="areaLevel == 'school'">
                 SELECT
-                x.XXMC AS area_name,
-                x.XXDM AS area_code,
-                x.KQMC AS parent_name,
-                x.KQDM AS parent_code,
-                'school' AS area_level,
-                COUNT(DISTINCT b.JB) AS children_count
-                FROM xxjbxx x
-                LEFT JOIN BJXX b ON x.XXDM = b.XXDM
-                WHERE x.XXMC IS NOT NULL
-                <if test="parentName != null and parentName != ''">
-                    AND x.KQMC = #{parentName}
+                t1.DM AS area_code, t1.MC AS area_name, 'school' AS area_level,
+                SUBSTR(t1.DM, 1, 2) AS parent_code,
+                (SELECT p.MC FROM XYZDK p WHERE p.DM = SUBSTR(t1.DM, 1, 2) AND p.JH = 'KD') AS parent_name,
+                (SELECT COUNT(DISTINCT b.JB) FROM BJXX b WHERE b.XXDM = t1.DM) AS children_count
+                FROM XYZDK t1
+                WHERE t1.JH = 'ZX'
+                <if test="dm != null and dm != '' and dm != 'qhs'">
+                    AND (t1.DM LIKE #{dm} || '%' OR #{dm} LIKE t1.DM || '%')
                 </if>
-                GROUP BY x.XXMC, x.XXDM, x.KQMC, x.KQDM
-                ORDER BY x.XXMC
+                <if test="parentName != null and parentName != ''">
+                    AND SUBSTR(t1.DM, 1, 2) = #{parentName}
+                </if>
+                ORDER BY t1.DM
             </when>
 
-            <!-- 年级 -->
             <when test="areaLevel == 'grade'">
                 SELECT
-                CAST(b.JB AS VARCHAR(10)) AS area_name,
-                CAST(b.JB AS VARCHAR(10)) AS area_code,
-                x.XXMC AS parent_name,
-                x.XXDM AS parent_code,
-                'grade' AS area_level,
-                COUNT(DISTINCT b.BJBS) AS children_count
-                FROM xxjbxx x
-                LEFT JOIN BJXX b ON x.XXDM = b.XXDM
-                WHERE b.JB IS NOT NULL
-                <if test="parentName != null and parentName != ''">
-                    AND x.XXMC = #{parentName,jdbcType=VARCHAR}
+                CAST(b.JB AS VARCHAR(10)) AS area_code, CAST(b.JB AS VARCHAR(10)) AS area_name,
+                z.DM AS parent_code, z.MC AS parent_name, 'grade' AS area_level,
+                COUNT(b.BJBS) AS children_count
+                FROM BJXX b JOIN XYZDK z ON b.XXDM = z.DM
+                WHERE z.JH = 'ZX'
+                <if test="dm != null and dm != '' and dm != 'qhs'">
+                    AND (#{dm} LIKE z.DM || '%')
                 </if>
-                GROUP BY b.JB, x.XXMC, x.XXDM
+                <if test="parentName != null and parentName != ''">
+                    AND b.XXDM = #{parentName}
+                </if>
+                GROUP BY b.JB, z.DM, z.MC
                 ORDER BY CAST(b.JB AS INTEGER) DESC
             </when>
 
-            <!-- 班级 -->
             <when test="areaLevel == 'class'">
                 SELECT
-                b.BJMC AS area_name,
-                CAST(b.BJBS AS VARCHAR(20)) AS area_code,
-                CAST(b.JB AS VARCHAR(10)) || '级' AS parent_name,
-                x.XXDM AS parent_code,
-                'class' AS area_level,
+                CAST(b.BJBS AS VARCHAR(20)) AS area_code, b.BJMC AS area_name, 'class' AS area_level,
+                z.DM AS parent_code,
+                z.MC || ' ' || b.JB || '级' AS parent_name,
                 0 AS children_count
-                FROM BJXX b
-                JOIN xxjbxx x ON b.XXDM = x.XXDM
-                WHERE b.BJBS IS NOT NULL
+                FROM BJXX b JOIN XYZDK z ON b.XXDM = z.DM
+                WHERE z.JH = 'ZX'
+                <if test="dm != null and dm != '' and dm != 'qhs'">
+                    AND (#{dm} LIKE z.DM || '%')
+                </if>
                 <if test="parentName != null and parentName != ''">
-                    AND CONCAT(x.XXMC, CAST(b.JB AS VARCHAR(10))) = #{parentName,jdbcType=VARCHAR}
+                    AND b.XXDM = SUBSTR(#{parentName}, 1, 5)
+                    AND CAST(b.JB AS VARCHAR(10)) = SUBSTR(#{parentName}, 6)
                 </if>
                 ORDER BY b.BJMC
             </when>

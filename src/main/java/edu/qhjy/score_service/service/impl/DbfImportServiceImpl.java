@@ -117,7 +117,6 @@ public class DbfImportServiceImpl implements DbfImportService {
         log.info("【性能分析】文件名: {}, 文件大小: {} bytes", file.getOriginalFilename(), file.getSize());
 
 
-
         String taskId = UUID.randomUUID().toString();
         LocalDateTime startTime = LocalDateTime.now();
 
@@ -508,7 +507,6 @@ public class DbfImportServiceImpl implements DbfImportService {
 //        log.info("【性能分析-阶段3】方法 batchInsertScores 总耗时: {} 毫秒", currentTime - methodStartTime);
 //        // ===============================================================
 //    }
-
     private void batchInsertScores(List<DbfRecordDTO> validRecords, String ksjhdm) {
         long methodStartTime = System.currentTimeMillis();
         log.info("【性能分析-阶段3】进入 batchInsertScores [高性能模式]，待处理记录数: {}", validRecords.size());
@@ -519,7 +517,9 @@ public class DbfImportServiceImpl implements DbfImportService {
         if (!validRecords.isEmpty()) {
             try {
                 YjxhEntity yjxhEntity = yjxhMapper.selectByYjxhAndKsjhdm(validRecords.get(0).getYjxh(), ksjhdm);
-                if (yjxhEntity != null) { kmlx = yjxhEntity.getKmlx(); }
+                if (yjxhEntity != null) {
+                    kmlx = yjxhEntity.getKmlx();
+                }
             } catch (Exception e) {
                 log.warn("查询KMLX失败，使用默认值0。错误: {}", e.getMessage());
             }

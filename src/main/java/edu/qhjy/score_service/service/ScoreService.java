@@ -81,7 +81,7 @@ public interface ScoreService {
      * @param areaType   区域类型（city/county/school/grade/class）
      * @return 区域层级数据（包含完整信息）
      */
-    List<AreaHierarchyVO> getAreaHierarchyEnhanced(String parentArea, String areaType);
+    List<AreaHierarchyVO> getAreaHierarchyEnhanced(String parentArea, String areaType, String dm);
 
     /**
      * 获取可用的科目列表

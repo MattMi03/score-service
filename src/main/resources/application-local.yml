@@ -8,13 +8,15 @@ spring:
   cloud:
     nacos:
       discovery:
-        enabled: false  # 本地环境禁用Nacos服务发现
+        server-addr: localhost:8848
+        username: nacos
+        password: nacos
     sentinel:
       enabled: false   # 本地环境禁用Sentinel
 
   datasource:
     driverClassName: dm.jdbc.driver.DmDriver
-    jdbcUrl: jdbc:dm://47.120.37.33:5236/EDU_DATABASE?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&sessionVariables=group_concat_max_len=10240
+    jdbcUrl: jdbc:dm://47.120.37.33:5236/EDU_COPY?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&sessionVariables=group_concat_max_len=10240
     username: SYSDBA
     password: SYSDBA001
     # HikariCP连接池配置

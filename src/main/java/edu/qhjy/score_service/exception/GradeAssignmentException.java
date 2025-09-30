@@ -19,26 +19,31 @@ public class GradeAssignmentException extends RuntimeException {
     public static final String VALIDATION_ERROR = "VALIDATION_ERROR";
     private final String errorCode;
     private final Object[] args;
+
     public GradeAssignmentException(String message) {
         super(message);
         this.errorCode = "GRADE_ASSIGNMENT_ERROR";
         this.args = null;
     }
+
     public GradeAssignmentException(String message, Throwable cause) {
         super(message, cause);
         this.errorCode = "GRADE_ASSIGNMENT_ERROR";
         this.args = null;
     }
+
     public GradeAssignmentException(String errorCode, String message) {
         super(message);
         this.errorCode = errorCode;
         this.args = null;
     }
+
     public GradeAssignmentException(String errorCode, String message, Object... args) {
         super(message);
         this.errorCode = errorCode;
         this.args = args;
     }
+
     public GradeAssignmentException(String errorCode, String message, Throwable cause) {
         super(message, cause);
         this.errorCode = errorCode;

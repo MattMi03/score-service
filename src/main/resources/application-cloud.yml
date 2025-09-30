@@ -17,7 +17,7 @@ spring:
   
   datasource:
     driverClassName: dm.jdbc.driver.DmDriver
-    jdbcUrl: jdbc:dm://172.20.193.204:5236/EDU_DATABASE?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    jdbcUrl: jdbc:dm://172.20.193.204:5236/EDU_COPY?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: SYSDBA
     password: SYSDBA001
     # HikariCP连接池配置
@@ -71,12 +71,12 @@ mybatis:
   type-aliases-package: edu.qhjy.score_service_v2.domain.entity
   configuration:
     map-underscore-to-camel-case: true
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
 
 logging:
   level:
-#    edu.qhjy.score_service: info
+    #    edu.qhjy.score_service: info
     edu.qhjy.score_service.aop: debug
     edu.qhjy.score_service.config: debug
     edu.qhjy.score_service.controller: debug

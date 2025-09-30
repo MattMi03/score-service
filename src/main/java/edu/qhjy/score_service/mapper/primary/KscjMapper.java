@@ -229,7 +229,8 @@ public interface KscjMapper {
      */
     List<java.util.Map<String, Object>> selectAreaHierarchy(
             @Param("areaLevel") String areaLevel,
-            @Param("parentName") String parentName);
+            @Param("parentName") String parentName,
+            @Param("dm") String dm);
 
     /**
      * 查询可用的科目列表

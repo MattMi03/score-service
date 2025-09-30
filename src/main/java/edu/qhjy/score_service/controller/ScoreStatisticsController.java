@@ -1,5 +1,6 @@
 package edu.qhjy.score_service.controller;
 
+import edu.qhjy.score_service.aop.UserContext;
 import edu.qhjy.score_service.common.Result;
 import edu.qhjy.score_service.domain.vo.*;
 import edu.qhjy.score_service.service.ScoreService;
@@ -145,7 +146,10 @@ public class ScoreStatisticsController {
         log.info("获取增强区域层级数据：areaType={}, parentArea={}", areaType, parentArea);
 
         try {
-            List<AreaHierarchyVO> result = scoreService.getAreaHierarchyEnhanced(parentArea, areaType);
+            UserContext.UserInfo user = UserContext.get();
+            String dm = user.getDm();
+            log.info("用户dm： {}", dm);
+            List<AreaHierarchyVO> result = scoreService.getAreaHierarchyEnhanced(parentArea, areaType, dm);
             return Result.success(result);
         } catch (Exception e) {
             log.error("获取增强区域层级数据失败", e);
@@ -167,8 +171,10 @@ public class ScoreStatisticsController {
             // 获取可用的考试计划
             List<String> examPlans = scoreService.getAvailableExamPlans(subjectName);
 
+            UserContext.UserInfo user = UserContext.get();
+            String dm = user.getDm();
             // 获取可用的区域
-            List<AreaHierarchyVO> cityHierarchy = scoreService.getAreaHierarchyEnhanced(null, "city");
+            List<AreaHierarchyVO> cityHierarchy = scoreService.getAreaHierarchyEnhanced(null, "city", dm);
             List<String> cities = cityHierarchy.stream()
                     .map(AreaHierarchyVO::getName)
                     .toList();
