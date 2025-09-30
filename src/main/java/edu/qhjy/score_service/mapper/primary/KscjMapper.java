@@ -6,7 +6,6 @@ import edu.qhjy.score_service.domain.dto.StudentDataQueryDTO;
 import edu.qhjy.score_service.domain.entity.KscjEntity;
 import edu.qhjy.score_service.domain.vo.ExamScoreVO;
 import edu.qhjy.score_service.domain.vo.GradeBookVO;
-import edu.qhjy.score_service.domain.vo.GradeQueryVO;
 import edu.qhjy.score_service.domain.vo.StudentDataVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -22,17 +21,10 @@ import java.util.Map;
 @Mapper
 public interface KscjMapper {
 
-    int batchUpsertScores(List<KscjEntity> list);
-
     /**
      * 查询所有成绩记录
      */
     List<KscjEntity> selectAll();
-
-    /**
-     * 根据ID查询成绩
-     */
-    KscjEntity selectById(@Param("kscjbs") Long kscjbs);
 
     /**
      * 根据考生号和科目名称查询成绩
@@ -68,16 +60,6 @@ public interface KscjMapper {
     List<KscjEntity> selectByKmmc(@Param("kmmc") String kmmc);
 
     /**
-     * 根据考试计划和科目名称查询所有成绩
-     */
-    List<KscjEntity> selectByKsjhdmAndKmmc(@Param("ksjhdm") String ksjhdm, @Param("kmmc") String kmmc);
-
-    /**
-     * 根据班级和科目名称查询成绩
-     */
-    List<KscjEntity> selectByBjmcAndKmmc(@Param("bjmc") String bjmc, @Param("kmmc") String kmmc);
-
-    /**
      * 插入成绩
      */
     int insert(KscjEntity entity);
@@ -93,26 +75,9 @@ public interface KscjMapper {
     int batchInsertOptimized(@Param("list") List<KscjEntity> list);
 
     /**
-     * 根据考生号列表、考试计划代码和科目名称批量删除成绩记录（用于DBF导入覆盖模式）
-     *
-     * @param kshList 考生号列表
-     * @param ksjhdm  考试计划代码
-     * @param kmmc    科目名称
-     * @return 删除的记录数
-     */
-    int deleteByKshListAndKsjhdmAndKmmc(@Param("kshList") List<String> kshList,
-                                        @Param("ksjhdm") String ksjhdm,
-                                        @Param("kmmc") String kmmc);
-
-    /**
      * 更新成绩
      */
     int updateById(KscjEntity entity);
-
-    /**
-     * 删除成绩
-     */
-    int deleteById(@Param("kscjbs") Long kscjbs);
 
     /**
      * 分页查询学生数据
@@ -125,52 +90,6 @@ public interface KscjMapper {
      * 用于分页计算
      */
     Long countStudentData(@Param("query") StudentDataQueryDTO query);
-
-    /**
-     * 分页查询成绩数据（支持级联查询）
-     * 支持多条件筛选和分页，返回学生基本信息和成绩数据
-     */
-    List<GradeQueryVO> selectGradeDataWithPagination(@Param("query") GradeQueryDTO query);
-
-    /**
-     * 分页查询成绩数据（使用ResultHandler处理）
-     * 直接将科目成绩映射到scores Map中
-     */
-    void selectGradeDataWithResultHandler(@Param("query") GradeQueryDTO query,
-                                          org.apache.ibatis.session.ResultHandler<java.util.Map<String, Object>> resultHandler);
-
-    /**
-     * 统计成绩数据总数（支持级联查询）
-     * 用于分页计算
-     */
-    Long countGradeData(@Param("query") GradeQueryDTO query);
-
-    /**
-     * 根据考生号和科目名称删除成绩
-     */
-    int deleteByKshAndKmmc(@Param("ksh") String ksh, @Param("kmmc") String kmmc);
-
-    /**
-     * 根据科目名称删除所有成绩
-     */
-    int deleteByKmmc(@Param("kmmc") String kmmc);
-
-    /**
-     * 统计科目成绩信息
-     */
-    java.util.Map<String, Object> selectScoreStatistics(@Param("kmmc") String kmmc);
-
-    /**
-     * 查询科目成绩分布
-     */
-    List<java.util.Map<String, Object>> selectScoreDistribution(@Param("kmmc") String kmmc);
-
-    /**
-     * 根据考试计划和科目查询学生基础信息（用于模板预填充）
-     */
-    List<StudentDataVO> selectStudentInfoForTemplate(@Param("ksjhdm") String ksjhdm, @Param("kmmc") String kmmc);
-
-    // ==================== 新增统计分析方法 ====================
 
     /**
      * 查询区域成绩统计分布（柱状图数据）
@@ -237,14 +156,6 @@ public interface KscjMapper {
      */
     List<String> selectAvailableSubjects();
 
-    /**
-     * 查询考试计划科目统计信息
-     *
-     * @param ksjhdm 考试计划代码（可选）
-     * @return 考试计划科目统计信息列表
-     */
-    List<java.util.Map<String, Object>> selectExamPlanSubjectStatistics(@Param("ksjhdm") String ksjhdm);
-
     // ==================== 等级划分相关方法 ====================
 
     /**
@@ -309,31 +220,7 @@ public interface KscjMapper {
             @Param("kmmc") String kmmc,
             @Param("szsmc") String szsmc);
 
-    /**
-     * 清除学生等级信息（将cjdjm设为null）
-     *
-     * @param ksjhdm 考试计划代码
-     * @param kmmc   科目名称
-     * @param szsmc  市州名称（可选）
-     * @return 更新的记录数
-     */
-    int clearStudentGrades(
-            @Param("ksjhdm") String ksjhdm,
-            @Param("kmmc") String kmmc,
-            @Param("szsmc") String szsmc);
-
     // ==================== 一分一段表相关方法 ====================
-
-    /**
-     * 获取基础统计数据
-     *
-     * @param ksjhdm 考试计划代码
-     * @param kmmc   科目名称
-     * @return 基础统计信息
-     */
-    java.util.Map<String, Object> getBasicStatistics(
-            @Param("ksjhdm") String ksjhdm,
-            @Param("kmmc") String kmmc);
 
     /**
      * 获取市州统计数据
@@ -343,17 +230,6 @@ public interface KscjMapper {
      * @return 市州统计信息列表
      */
     List<java.util.Map<String, Object>> getCityStatistics(
-            @Param("ksjhdm") String ksjhdm,
-            @Param("kmmc") String kmmc);
-
-    /**
-     * 获取考试计划下的市州列表
-     *
-     * @param ksjhdm 考试计划代码
-     * @param kmmc   科目名称
-     * @return 市州名称列表
-     */
-    List<String> getCitiesByExamPlan(
             @Param("ksjhdm") String ksjhdm,
             @Param("kmmc") String kmmc);
 
@@ -444,18 +320,6 @@ public interface KscjMapper {
     int updateOutOfProvinceScore(KscjEntity entity);
 
     /**
-     * 检查学生是否已存在成绩记录
-     *
-     * @param ksh    考生号
-     * @param ksjhdm 考试计划代码
-     * @param kmmc   科目名称
-     * @return 存在的记录数
-     */
-    int countExistingScore(@Param("ksh") String ksh,
-                           @Param("ksjhdm") String ksjhdm,
-                           @Param("kmmc") String kmmc);
-
-    /**
      * 根据条件查询报名学生信息（用于初始化）
      *
      * @param ksjhdm 考试计划代码
@@ -517,58 +381,6 @@ public interface KscjMapper {
     int batchUpdateScores(
             @Param("scoreUpdates") List<edu.qhjy.score_service.domain.dto.ScoreUpdateDTO> scoreUpdates);
 
-    // ==================== DM8物化视图优化查询 ====================
-
-    /**
-     * DM8物化视图查询：从物化视图查询成绩数据（使用ResultHandler处理）
-     *
-     * @param ksjhdm        考试计划代码
-     * @param kmlx          科目类型
-     * @param szsmc         地市名称
-     * @param kqmc          考区名称
-     * @param xxmc          学校名称
-     * @param ksh           考生号
-     * @param grade         年级
-     * @param bjmc          班级名称
-     * @param offset        偏移量
-     * @param limit         限制数量
-     * @param resultHandler 结果处理器
-     */
-    void selectGradeDataFromMV(
-            @Param("ksjhdm") String ksjhdm,
-            @Param("kmlx") Integer kmlx,
-            @Param("szsmc") String szsmc,
-            @Param("kqmc") String kqmc,
-            @Param("xxmc") String xxmc,
-            @Param("ksh") String ksh,
-            @Param("grade") String grade,
-            @Param("bjmc") String bjmc,
-            @Param("offset") Integer offset,
-            @Param("limit") Integer limit,
-            org.apache.ibatis.session.ResultHandler<java.util.Map<String, Object>> resultHandler);
-
-    /**
-     * DM8物化视图统计查询：从物化视图统计记录数
-     *
-     * @param ksjhdm 考试计划代码
-     * @param kmlx   科目类型
-     * @param szsmc  地市名称
-     * @param kqmc   考区名称
-     * @param xxmc   学校名称
-     * @param ksh    考生号
-     * @param grade  年级
-     * @param bjmc   班级名称
-     * @return 记录总数
-     */
-    Long countFromMaterializedView(
-            @Param("ksjhdm") String ksjhdm,
-            @Param("kmlx") Integer kmlx,
-            @Param("szsmc") String szsmc,
-            @Param("kqmc") String kqmc,
-            @Param("xxmc") String xxmc,
-            @Param("ksh") String ksh,
-            @Param("grade") String grade,
-            @Param("bjmc") String bjmc);
 
     void clearTempImportTable();
 
@@ -576,4 +388,10 @@ public interface KscjMapper {
 
     int mergeFromTempTable();
 
+    List<String> selectPaginatedStudentKsh(GradeQueryDTO queryDTO);
+
+    List<Map<String, Object>> selectGradeDataByKshList(
+            @Param("kshList") List<String> kshList,
+            @Param("query") GradeQueryDTO queryDTO
+    );
 }

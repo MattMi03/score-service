@@ -51,6 +51,8 @@ public class ExamScoreQueryDTO {
      */
     private Boolean withScores;
 
+    private String permissionDm;
+
     /**
      * 页码（从1开始）
      */

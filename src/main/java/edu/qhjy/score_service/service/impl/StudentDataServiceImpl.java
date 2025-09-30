@@ -1,5 +1,6 @@
 package edu.qhjy.score_service.service.impl;
 
+import edu.qhjy.score_service.aop.UserContext;
 import edu.qhjy.score_service.common.PageResult;
 import edu.qhjy.score_service.domain.dto.StudentDataQueryDTO;
 import edu.qhjy.score_service.domain.vo.StudentDataVO;
@@ -25,6 +26,17 @@ public class StudentDataServiceImpl implements StudentDataService {
     @Override
     public PageResult<StudentDataVO> queryStudentData(StudentDataQueryDTO queryDTO) {
         log.info("开始查询学生数据，查询条件：{}", queryDTO);
+
+        // --- [NEW] 权限逻辑 ---
+        // 1. 从 UserContext 获取当前登录用户的 DM 码
+        UserContext.UserInfo user = UserContext.get();
+        if (user != null) {
+            String userDm = user.getDm();
+            log.info("设置最终数据范围权限，用户DM: {}", userDm);
+            // 2. 将用户权限DM设置到查询DTO中，由SQL进行最终的数据范围限定
+            queryDTO.setPermissionDm(userDm);
+        }
+        // --- [NEW] 权限逻辑结束 ---
 
         // 参数校验
         validateQueryParams(queryDTO);

@@ -1,11 +1,13 @@
 package edu.qhjy.score_service.service.impl;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import edu.qhjy.score_service.aop.UserContext;
 import edu.qhjy.score_service.common.PageResult;
 import edu.qhjy.score_service.domain.dto.GradeQueryDTO;
 import edu.qhjy.score_service.domain.handler.GradeQueryResultHandler;
 import edu.qhjy.score_service.domain.vo.GradeQueryVO;
 import edu.qhjy.score_service.mapper.primary.KscjMapper;
-import edu.qhjy.score_service.mapper.primary.KskmxxMapper;
 import edu.qhjy.score_service.service.GradeService;
 import edu.qhjy.score_service.service.redis.SubjectCacheService;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 成绩查询服务实现类
@@ -32,7 +37,17 @@ public class GradeServiceImpl implements GradeService {
         log.info("开始查询成绩数据，查询条件：{}", queryDTO);
 
         try {
-            // 回退到传统查询方案，保留科目数据缓存优化
+            // --- 最终权限逻辑 ---
+            // 1. 从 UserContext 获取当前登录用户的 DM 码
+            UserContext.UserInfo user = UserContext.get();
+            if (user != null) {
+                String userDm = user.getDm();
+                log.info("设置最终数据范围权限，用户DM: {}", userDm);
+                // 2. 将用户权限DM设置到查询DTO中，由SQL进行最终的数据范围限定
+                queryDTO.setPermissionDm(userDm);
+            }
+            // --- 权限逻辑结束 ---
+
             log.info("使用传统查询方案");
             return queryWithTraditionalMethod(queryDTO);
 
@@ -47,26 +62,64 @@ public class GradeServiceImpl implements GradeService {
      * 传统查询方案（原有逻辑）
      */
     private PageResult<GradeQueryVO> queryWithTraditionalMethod(GradeQueryDTO queryDTO) {
-        // 查询总数
-        Long total = kscjMapper.countGradeData(queryDTO);
-        log.info("查询到成绩数据总数：{}", total);
+        // 步骤 1: 使用 PageHelper 对学生ID进行精确分页
+        PageHelper.startPage(queryDTO.getPageNum(), queryDTO.getPageSize());
+        List<String> kshList = kscjMapper.selectPaginatedStudentKsh(queryDTO);
 
-        if (total == 0) {
+        // PageHelper 执行后，kshList 实际上是一个 Page 对象，包含了总数等信息
+        PageInfo<String> kshPageInfo = new PageInfo<>(kshList);
+        long total = kshPageInfo.getTotal(); // 获取正确的、按学生统计的总数
+        log.info("查询到符合条件的学生总数：{}", total);
+
+        if (total == 0 || kshList.isEmpty()) {
             return PageResult.empty(queryDTO.getPageNum(), queryDTO.getPageSize());
         }
 
-        // 使用ResultHandler分页查询数据
-        GradeQueryResultHandler resultHandler = new GradeQueryResultHandler();
-        kscjMapper.selectGradeDataWithResultHandler(queryDTO, resultHandler);
-        List<GradeQueryVO> records = resultHandler.getResults();
-        log.info("查询到成绩数据记录数：{}", records.size());
+        // 步骤 2: 根据分页得到的 kshList，查询这些考生的所有详细成绩信息
+        List<Map<String, Object>> flatStudentScores = kscjMapper.selectGradeDataByKshList(kshList, queryDTO);
+        log.info("查询到本页学生的详细成绩条目数：{}", flatStudentScores.size());
 
-        // 补全科目数据，确保所有科目都在scores中返回
+        // 步骤 3: 在内存中对详细数据进行分组和组装
+        // 按KSH对结果进行分组
+        Map<String, List<Map<String, Object>>> groupedByKsh = flatStudentScores.stream()
+                .collect(Collectors.groupingBy(row -> (String) row.get("ksh")));
+
+        List<GradeQueryVO> records = new ArrayList<>();
+        // 按照分页查询出的kshList的顺序来组装，确保排序正确
+        for (String ksh : kshList) {
+            List<Map<String, Object>> studentRows = groupedByKsh.get(ksh);
+            if (studentRows == null || studentRows.isEmpty()) continue;
+
+            // 以第一条记录为基础，构建VO对象
+            Map<String, Object> firstRow = studentRows.get(0);
+            GradeQueryVO vo = new GradeQueryVO();
+            vo.setKsh((String) firstRow.get("ksh"));
+            vo.setXm((String) firstRow.get("xm"));
+            vo.setSfzjh((String) firstRow.get("sfzjh"));
+            vo.setGrade((String) firstRow.get("grade"));
+            vo.setBj((String) firstRow.get("bj"));
+            vo.setXb((String) firstRow.get("xb"));
+            vo.setMz((String) firstRow.get("mz"));
+            vo.setSzsmc((String) firstRow.get("szsmc"));
+            vo.setKqmc((String) firstRow.get("kqmc"));
+            vo.setXxmc((String) firstRow.get("xxmc"));
+            vo.setXxdm((String) firstRow.get("xxdm"));
+
+            // 将该学生的所有科目成绩聚合到scores Map中
+            LinkedHashMap<String, String> scores = new LinkedHashMap<>();
+            for (Map<String, Object> row : studentRows) {
+                scores.put((String) row.get("kmmc"), (String) row.get("score_value"));
+            }
+            vo.setScores(scores);
+            records.add(vo);
+        }
+        log.info("组装后，本页实际返回学生记录数：{}", records.size());
+
+        // 补全科目数据
         completeSubjectScores(records, queryDTO);
 
-        // 计算总页数
+        // 步骤 4: 构建最终的 PageResult 对象
         int totalPages = (int) Math.ceil((double) total / queryDTO.getPageSize());
-
         return PageResult.<GradeQueryVO>builder()
                 .pageNum(queryDTO.getPageNum())
                 .pageSize(queryDTO.getPageSize())
@@ -75,7 +128,6 @@ public class GradeServiceImpl implements GradeService {
                 .records(records)
                 .build();
     }
-
 
     /**
      * 补全科目数据，确保所有科目都在scores中返回

@@ -1,5 +1,6 @@
 package edu.qhjy.score_service.service.impl;
 
+import edu.qhjy.score_service.aop.UserContext;
 import edu.qhjy.score_service.common.PageResult;
 import edu.qhjy.score_service.domain.dto.ExamScoreQueryDTO;
 import edu.qhjy.score_service.domain.dto.InitializeExamStudentsDTO;
@@ -540,13 +541,25 @@ public class ScoreServiceImpl implements ScoreService {
 
     @Override
     public PageResult<ExamScoreVO> getExamScoresWithPagination(ExamScoreQueryDTO query) {
-        // 查询总数
+
+        // --- [NEW] 权限逻辑 ---
+        // 1. 从 UserContext 获取当前登录用户的 DM 码
+        UserContext.UserInfo user = UserContext.get();
+        if (user != null) {
+            String userDm = user.getDm();
+            log.info("为考查科目查询设置最终数据范围权限，用户DM: {}", userDm);
+            // 2. 将用户权限DM设置到查询DTO中，由SQL进行最终的数据范围限定
+            query.setPermissionDm(userDm);
+        }
+        // --- [NEW] 权限逻辑结束 ---
+
+        // 查询总数 (这部分逻辑不变)
         Long total = kscjMapper.countExamScores(query);
 
-        // 查询数据列表
+        // 查询数据列表 (这部分逻辑不变)
         List<ExamScoreVO> records = kscjMapper.selectExamScoresWithPagination(query);
 
-        // 构建分页结果
+        // 构建分页结果 (这部分逻辑不变)
         return PageResult.of(records, query.getPageNum(), query.getPageSize(), total);
     }
 

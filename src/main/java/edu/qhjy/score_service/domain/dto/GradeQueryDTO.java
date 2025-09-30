@@ -64,6 +64,7 @@ public class GradeQueryDTO {
     @Builder.Default
     private Boolean onlyWithScores = false;
 
+    private String permissionDm;
     /**
      * 验证查询参数
      */

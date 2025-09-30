@@ -89,9 +89,6 @@
     </select>
 
     <!-- ==================== 省外转入考生查询相关SQL ==================== -->
-
-    <!-- 分页查询省外转入考生数据（支持级联查询） -->
-    <!-- 分页查询省外转入考生数据（支持级联查询） -->
     <select id="selectOutOfProvinceStudentsWithPagination"
             resultType="edu.qhjy.score_service.domain.vo.OutOfProvinceStudentVO">
         SELECT
@@ -100,29 +97,31 @@
         k.SHRXM as shr,
         k.XM as xm,
         k.SFZJH as sfzjh,
-        k.SZSMC as ds,
-        kq.KQMC as kq,
-        k.XXMC as school,
+        city.MC as ds,      -- [REFACTORED]
+        area.MC as kq,       -- [REFACTORED]
+        school.MC as school, -- [REFACTORED]
         k.CJRXM as cjr,
         k.CJSJ as cjsj,
         k.SHJD as shjd,
         k.SHYJ as shyj,
         k.KSH as ksh
         FROM ksxx k
-        LEFT JOIN kqxx kq ON k.kqmc = kq.kqmc
+        LEFT JOIN XYZDK school ON k.XXDM = school.DM AND school.JH = 'ZX'
+        LEFT JOIN XYZDK area ON SUBSTR(k.XXDM, 1, 2) = area.DM AND area.JH = 'KD'
+        LEFT JOIN XYZDK city ON SUBSTR(k.XXDM, 1, 1) = city.DM AND city.JH = 'KQ'
         WHERE k.KSH IN (
         SELECT KSH
         FROM kscj
         WHERE KSJHDM = '0000'
         )
         <if test="query.szsmc != null and query.szsmc != ''">
-            AND k.SZSMC = #{query.szsmc,jdbcType=VARCHAR}
+            AND city.MC = #{query.szsmc,jdbcType=VARCHAR}  -- [REFACTORED]
         </if>
         <if test="query.kqmc != null and query.kqmc != ''">
-            AND kq.KQMC = #{query.kqmc,jdbcType=VARCHAR}
+            AND area.MC = #{query.kqmc,jdbcType=VARCHAR}   -- [REFACTORED]
         </if>
         <if test="query.xxmc != null and query.xxmc != ''">
-            AND k.XXMC = #{query.xxmc,jdbcType=VARCHAR}
+            AND school.MC = #{query.xxmc,jdbcType=VARCHAR} -- [REFACTORED]
         </if>
         <if test="query.ksh != null and query.ksh != ''">
             AND k.KSH = #{query.ksh,jdbcType=VARCHAR}
@@ -150,20 +149,22 @@
     <select id="countOutOfProvinceStudents" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM ksxx k
-        LEFT JOIN kqxx kq ON k.kqmc = kq.kqmc
+        LEFT JOIN XYZDK school ON k.XXDM = school.DM AND school.JH = 'ZX'
+        LEFT JOIN XYZDK area ON SUBSTR(k.XXDM, 1, 2) = area.DM AND area.JH = 'KD'
+        LEFT JOIN XYZDK city ON SUBSTR(k.XXDM, 1, 1) = city.DM AND city.JH = 'KQ'
         WHERE k.KSH IN (
         SELECT KSH
         FROM kscj
         WHERE KSJHDM = '0000'
         )
         <if test="query.szsmc != null and query.szsmc != ''">
-            AND k.SZSMC = #{query.szsmc,jdbcType=VARCHAR}
+            AND city.MC = #{query.szsmc,jdbcType=VARCHAR}  -- [REFACTORED]
         </if>
         <if test="query.kqmc != null and query.kqmc != ''">
-            AND kq.KQMC = #{query.kqmc,jdbcType=VARCHAR}
+            AND area.MC = #{query.kqmc,jdbcType=VARCHAR}   -- [REFACTORED]
         </if>
         <if test="query.xxmc != null and query.xxmc != ''">
-            AND k.XXMC = #{query.xxmc,jdbcType=VARCHAR}
+            AND school.MC = #{query.xxmc,jdbcType=VARCHAR} -- [REFACTORED]
         </if>
         <if test="query.ksh != null and query.ksh != ''">
             AND k.KSH = #{query.ksh,jdbcType=VARCHAR}

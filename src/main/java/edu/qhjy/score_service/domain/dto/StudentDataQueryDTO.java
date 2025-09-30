@@ -75,6 +75,8 @@ public class StudentDataQueryDTO {
     @Builder.Default
     private String sortOrder = "asc";
 
+    private String permissionDm;
+
     /**
      * 验证查询参数
      */
