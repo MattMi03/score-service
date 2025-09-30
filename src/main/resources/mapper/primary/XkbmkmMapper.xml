@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.XkbmkmMapper">
+
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.XkbmkmEntity">
+        <id column="XKBMKMBS" property="xkbmkmbs" jdbcType="BIGINT"/>
+        <result column="XKBMBS" property="xkbmbs" jdbcType="BIGINT"/>
+        <result column="KMMC" property="kmmc" jdbcType="VARCHAR"/>
+        <result column="BMF" property="bmf" jdbcType="INTEGER"/>
+        <result column="CJRXM" property="cjrxm" jdbcType="VARCHAR"/>
+        <result column="CJRGZRYM" property="cjrgzrym" jdbcType="VARCHAR"/>
+        <result column="CJSJ" property="cjsj" jdbcType="TIMESTAMP"/>
+        <result column="GXRXM" property="gxrxm" jdbcType="VARCHAR"/>
+        <result column="GXRGZRYM" property="gxrgzrym" jdbcType="VARCHAR"/>
+        <result column="GXSJ" property="gxsj" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        XKBMKMBS, XKBMBS, KMMC, BMF,
+        CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ
+    </sql>
+
+    <select id="selectByXkbmbs" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM XKBMKM
+        WHERE XKBMBS = #{xkbmbs}
+    </select>
+
+    <select id="selectByKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM XKBMKM
+        WHERE KMMC = #{kmmc}
+        LIMIT 20
+    </select>
+
+    <select id="selectByXkbmbsAndKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM XKBMKM
+        WHERE XKBMBS = #{xkbmbs} AND KMMC = #{kmmc}
+    </select>
+
+    <select id="selectByXkbmbsList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM XKBMKM
+        WHERE XKBMBS IN
+        <foreach collection="xkbmbsList" item="xkbmbs" open="(" separator="," close=")">
+            #{xkbmbs}
+        </foreach>
+    </select>
+
+    <select id="selectByKmmcAndXkbmbsList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM XKBMKM
+        WHERE KMMC = #{kmmc} AND XKBMBS IN
+        <foreach collection="xkbmbsList" item="xkbmbs" open="(" separator="," close=")">
+            #{xkbmbs}
+        </foreach>
+    </select>
+
+    <insert id="insert" parameterType="edu.qhjy.score_service.domain.entity.XkbmkmEntity">
+        INSERT INTO XKBMKM (XKBMBS, KMMC, BMF, KKLX,
+                            CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ)
+        VALUES (#{xkbmbs,jdbcType=BIGINT}, #{kmmc,jdbcType=VARCHAR}, #{bmf,jdbcType=INTEGER}, #{kklx,jdbcType=INTEGER},
+                #{cjrxm,jdbcType=VARCHAR}, #{cjrgzrym,jdbcType=VARCHAR}, #{cjsj,jdbcType=TIMESTAMP},
+                #{gxrxm,jdbcType=VARCHAR}, #{gxrgzrym,jdbcType=VARCHAR}, #{gxsj,jdbcType=TIMESTAMP})
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO XKBMKM (
+        XKBMBS, KMMC, BMF, KKLX,
+        CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.xkbmbs,jdbcType=BIGINT}, #{item.kmmc,jdbcType=VARCHAR}, #{item.bmf,jdbcType=INTEGER},
+            #{item.kklx,jdbcType=INTEGER},
+            #{item.cjrxm,jdbcType=VARCHAR}, #{item.cjrgzrym,jdbcType=VARCHAR}, #{item.cjsj,jdbcType=TIMESTAMP},
+            #{item.gxrxm,jdbcType=VARCHAR}, #{item.gxrgzrym,jdbcType=VARCHAR}, #{item.gxsj,jdbcType=TIMESTAMP})
+        </foreach>
+    </insert>
+
+    <update id="updateById" parameterType="edu.qhjy.score_service.domain.entity.XkbmkmEntity">
+        UPDATE XKBMKM
+        SET XKBMBS   = #{xkbmbs,jdbcType=BIGINT},
+            KMMC     = #{kmmc,jdbcType=VARCHAR},
+            BMF      = #{bmf,jdbcType=INTEGER},
+            KKLX     = #{kklx,jdbcType=INTEGER},
+            GXRXM    = #{gxrxm,jdbcType=VARCHAR},
+            GXRGZRYM = #{gxrgzrym,jdbcType=VARCHAR},
+            GXSJ     = #{gxsj,jdbcType=TIMESTAMP}
+        WHERE XKBMKMBS = #{xkbmkmbs}
+    </update>
+
+    <delete id="deleteById">
+        DELETE
+        FROM XKBMKM
+        WHERE XKBMKMBS = #{xkbmkmbs}
+    </delete>
+
+</mapper>

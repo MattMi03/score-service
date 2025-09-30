@@ -1,0 +1,182 @@
+server:
+  port: 9002
+
+spring:
+  application:
+    name: score-service
+
+  cloud:
+    nacos:
+      discovery:
+        enabled: false  # 本地环境禁用Nacos服务发现
+    sentinel:
+      enabled: false   # 本地环境禁用Sentinel
+
+  datasource:
+    driverClassName: dm.jdbc.driver.DmDriver
+    jdbcUrl: jdbc:dm://47.120.37.33:5236/EDU_DATABASE?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&sessionVariables=group_concat_max_len=10240
+    username: SYSDBA
+    password: SYSDBA001
+    # HikariCP连接池配置
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 300000        # 减少到5分钟，降低连接复用时间
+      max-lifetime: 900000        # 减少到15分钟，强制定期回收连接
+      leak-detection-threshold: 60000
+      validation-timeout: 1000
+      keepalive-time: 120000      # 减少到2分钟
+      connection-test-query: SELECT 1
+      # 连接初始化SQL，清理会话状态
+      connection-init-sql: "SELECT 1"
+
+  servlet:
+    multipart:
+      max-file-size: 300MB
+      max-request-size: 300MB
+
+  # Redis配置 - 本地单体模式
+  data:
+    redis:
+      cluster:
+        nodes:
+          - localhost:30001
+          - localhost:30002
+          - localhost:30003
+          - localhost:30004
+          - localhost:30005
+          - localhost:30006
+      #      password: 1q2w3e4r
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 200  # 至少增加到100-200，以匹配并发需求
+          max-idle: 50     # 同样可以适当调高
+          min-idle: 10     # 保持一些空闲连接
+          max-wait: -1ms
+        cluster:
+          refresh:
+            adaptive: true
+
+  # 缓存配置
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000  # 默认10分钟
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: edu.qhjy.score_service.domain.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+logging:
+  level:
+    edu.qhjy.score_service: debug
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Swagger配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    disable-swagger-default-url: true
+  api-docs:
+    path: /v3/api-docs
+
+# DBF导入配置
+dbf:
+  import:
+    # 批处理配置
+    batch-size: 1000
+    # 线程池配置
+    thread-pool:
+      core-size: 4
+      max-size: 8
+      queue-capacity: 100
+      keep-alive-seconds: 60
+    # 文件解析超时配置
+    parse-timeout-seconds: 300
+    # 数据库操作超时配置
+    db-timeout-seconds: 600
+
+# 等级赋分配置
+grade:
+  assignment:
+    # 等级配置
+    grade-config:
+      # 等级列表
+      grades:
+        - "A"
+        - "B"
+        - "C"
+        - "D"
+        - "E"
+
+      # 等级比例配置
+      grade-ratios:
+        "A": 0.15   # 15%
+        "B": 0.35   # 35%
+        "C": 0.35   # 35%
+        "D": 0.13   # 13%
+        "E": 0.02   # 2%
+
+      # 最小参与人数
+      min-participants: 1000
+
+      # 是否启用同分处理
+      enable-same-score-handling: true
+
+    # Redis配置
+    redis-config:
+      # 分布式锁超时时间（秒）
+      lock-timeout: 300
+
+      # 进度缓存过期时间（秒）
+      progress-expiration: 7200
+
+      # 计算结果缓存过期时间（秒）
+      calculation-cache-expiration: 3600
+
+      # 任务队列过期时间（秒）
+      task-queue-expiration: 86400
+
+      # Redis键前缀
+      key-prefix: "grade_assignment"
+
+    # 任务处理配置
+    task-config:
+      # 任务轮询间隔（秒）
+      poll-interval: 5
+
+      # 清理间隔（小时）
+      cleanup-interval: 6
+
+      # 批处理大小
+      batch-size: 1000
+
+      # 最大重试次数
+      max-retries: 3
+
+      # 任务超时时间（分钟）
+      task-timeout: 30
+
+    # 算法配置
+    algorithm-config:
+      # 并行处理线程数
+      parallel-threads: 8
+
+      # 是否启用缓存
+      enable-cache: true
+
+      # 计算精度（小数位数）
+      precision: 1
+
+      # 是否启用详细日志
+      enable-detailed-logging: false

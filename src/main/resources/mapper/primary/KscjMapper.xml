@@ -1,0 +1,2077 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.KscjMapper">
+
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.KscjEntity">
+        <id column="kscjbs" property="kscjbs" jdbcType="BIGINT"/>
+        <result column="ksjhdm" property="ksjhdm" jdbcType="VARCHAR"/>
+        <result column="ksjhmc" property="ksjhmc" jdbcType="VARCHAR"/>
+        <result column="yjxh" property="yjxh" jdbcType="VARCHAR"/>
+        <result column="kmmc" property="kmmc" jdbcType="VARCHAR"/>
+        <result column="ksh" property="ksh" jdbcType="VARCHAR"/>
+        <result column="kklxmc" property="kklxmc" jdbcType="VARCHAR"/>
+        <result column="kmlx" property="kmlx" jdbcType="TINYINT"/>
+        <result column="fslkscj" property="fslkscj" jdbcType="TINYINT"/>
+        <result column="cjfx1" property="cjfx1" jdbcType="DECIMAL"/>
+        <result column="cjfx2" property="cjfx2" jdbcType="DECIMAL"/>
+        <result column="cjdjm" property="cjdjm" jdbcType="VARCHAR"/>
+        <result column="cjhgm" property="cjhgm" jdbcType="VARCHAR"/>
+        <result column="shjd" property="shjd" jdbcType="VARCHAR"/>
+        <result column="shzt" property="shzt" jdbcType="VARCHAR"/>
+        <result column="shsj" property="shsj" jdbcType="TIMESTAMP"/>
+        <result column="shrxm" property="shrxm" jdbcType="VARCHAR"/>
+        <result column="shyj" property="shyj" jdbcType="VARCHAR"/>
+        <result column="cjrxm" property="cjrxm" jdbcType="VARCHAR"/>
+        <result column="cjrgzrym" property="cjrgzrym" jdbcType="VARCHAR"/>
+        <result column="cjsj" property="cjsj" jdbcType="TIMESTAMP"/>
+        <result column="gxrxm" property="gxrxm" jdbcType="VARCHAR"/>
+        <result column="gxrgzrym" property="gxrgzrym" jdbcType="VARCHAR"/>
+        <result column="gxsj" property="gxsj" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        k.kscjbs, k.ksjhdm, k.yjxh, k.kmmc, k.ksh, k.kklxmc, k.kmlx, k.fslkscj, k.cjfx1, k.cjfx2, k.cjdjm, k.cjhgm, k.shjd, k.shzt, k.shsj, k.shrxm, k.shyj, k.cjrxm, k.cjrgzrym, k.cjsj, k.gxrxm, k.gxrgzrym, k.gxsj
+    </sql>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kscj k
+        ORDER BY k.ksjhdm, k.kmmc, k.ksh
+    </select>
+
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kscj k
+        WHERE k.kscjbs = #{kscjbs,jdbcType=BIGINT}
+    </select>
+
+    <select id="selectByKshAndKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kscj k
+        WHERE k.ksh = #{ksh,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        ORDER BY k.kscjbs DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectByKsh" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kscj k
+        WHERE k.ksh = #{ksh,jdbcType=VARCHAR}
+        ORDER BY k.kmmc
+    </select>
+
+    <select id="selectByKmmc" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kscj k
+        WHERE k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        LIMIT 20
+    </select>
+
+    <select id="selectByKsjhdmAndKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kscj k
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        ORDER BY k.ksh
+    </select>
+
+    <select id="selectByBjmcAndKmmc" resultMap="BaseResultMap">
+        SELECT<include refid="Base_Column_List"/>, s.bjmc
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE s.bjmc = #{bjmc,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        LIMIT 20
+    </select>
+
+    <select id="selectScoreStatistics" resultType="java.util.Map">
+        SELECT AVG(k.fslkscj)                                  as averageScore,
+               MAX(k.fslkscj)                                  as maxScore,
+               MIN(k.fslkscj)                                  as minScore,
+               COUNT(*)                                        as totalCount,
+               COUNT(CASE WHEN k.cjhgm = <![CDATA['合格']]> THEN 1 END) as passCount
+        FROM kscj k
+        WHERE k.kmmc = #{kmmc,jdbcType=VARCHAR}
+          AND k.kklxmc = '正考'
+    </select>
+
+    <select id="selectScoreDistribution" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT CASE
+                   WHEN k.fslkscj >= 90 THEN '90-100'
+                   WHEN k.fslkscj >= 80 THEN '80-89'
+                   WHEN k.fslkscj >= 70 THEN '70-79'
+                   WHEN k.fslkscj >= 60 THEN '60-69'
+                   ELSE '0-59'
+                   END  as scoreRange,
+               COUNT(*) as count
+        FROM kscj k
+        WHERE k.kmmc = #{kmmc,jdbcType=VARCHAR}
+          AND k.kklxmc = '正考'
+        GROUP BY CASE
+                     WHEN k.fslkscj >= 90 THEN '90-100'
+                     WHEN k.fslkscj >= 80 THEN '80-89'
+                     WHEN k.fslkscj >= 70 THEN '70-79'
+                     WHEN k.fslkscj >= 60 THEN '60-69'
+                     ELSE '0-59'
+                     END
+        ORDER BY scoreRange DESC
+    </select>
+
+    <insert id="insert" parameterType="edu.qhjy.score_service.domain.entity.KscjEntity" useGeneratedKeys="true"
+            keyProperty="kscjbs">
+        INSERT INTO kscj (ksjhdm, yjxh, kmmc, ksh, kklxmc, kmlx, fslkscj, cjfx1, cjfx2, cjdjm, cjhgm, shjd, shzt, shsj,
+                          shrxm, shyj, cjrxm, cjrgzrym, cjsj, gxrxm, gxrgzrym, gxsj)
+        VALUES (#{ksjhdm,jdbcType=VARCHAR}, #{yjxh,jdbcType=VARCHAR}, #{kmmc,jdbcType=VARCHAR}, #{ksh,jdbcType=VARCHAR},
+                #{kklxmc,jdbcType=VARCHAR}, #{kmlx,jdbcType=TINYINT},
+                #{fslkscj,jdbcType=TINYINT}, #{cjfx1,jdbcType=DECIMAL}, #{cjfx2,jdbcType=DECIMAL},
+                #{cjdjm,jdbcType=VARCHAR}, #{cjhgm,jdbcType=VARCHAR},
+                #{shjd,jdbcType=VARCHAR}, #{shzt,jdbcType=VARCHAR}, #{shsj,jdbcType=TIMESTAMP},
+                #{shrxm,jdbcType=VARCHAR}, #{shyj,jdbcType=VARCHAR},
+                #{cjrxm,jdbcType=VARCHAR}, #{cjrgzrym,jdbcType=VARCHAR}, #{cjsj,jdbcType=TIMESTAMP},
+                #{gxrxm,jdbcType=VARCHAR}, #{gxrgzrym,jdbcType=VARCHAR}, #{gxsj,jdbcType=TIMESTAMP})
+    </insert>
+
+    <insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="kscjbs">
+        INSERT INTO kscj (ksjhdm, ksjhmc, yjxh, kmmc, ksh, kklxmc, kmlx, fslkscj, cjfx1, cjfx2, cjdjm, cjhgm, shjd,
+        shzt, shsj, shrxm, shyj, cjrxm, cjrgzrym, cjsj, gxrxm, gxrgzrym, gxsj)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.ksjhdm,jdbcType=VARCHAR}, #{item.ksjhmc,jdbcType=VARCHAR}, #{item.yjxh,jdbcType=VARCHAR},
+            #{item.kmmc,jdbcType=VARCHAR}, #{item.ksh,jdbcType=VARCHAR}, #{item.kklxmc,jdbcType=VARCHAR},
+            #{item.kmlx,jdbcType=TINYINT},
+            #{item.fslkscj,jdbcType=TINYINT}, #{item.cjfx1,jdbcType=DECIMAL}, #{item.cjfx2,jdbcType=DECIMAL},
+            #{item.cjdjm,jdbcType=VARCHAR}, #{item.cjhgm,jdbcType=VARCHAR},
+            #{item.shjd,jdbcType=VARCHAR}, #{item.shzt,jdbcType=VARCHAR}, #{item.shsj,jdbcType=TIMESTAMP},
+            #{item.shrxm,jdbcType=VARCHAR}, #{item.shyj,jdbcType=VARCHAR},
+            #{item.cjrxm,jdbcType=VARCHAR}, #{item.cjrgzrym,jdbcType=VARCHAR}, #{item.cjsj,jdbcType=TIMESTAMP},
+            #{item.gxrxm,jdbcType=VARCHAR}, #{item.gxrgzrym,jdbcType=VARCHAR}, #{item.gxsj,jdbcType=TIMESTAMP})
+        </foreach>
+    </insert>
+
+    <!-- 优化INSERT语句，移除未使用字段 -->
+    <insert id="batchInsertOptimized" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="kscjbs">
+        INSERT INTO kscj (ksjhdm, ksjhmc, yjxh, kmmc, ksh, kklxmc, kmlx, fslkscj, cjfx1, cjfx2)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.ksjhdm,jdbcType=VARCHAR}, #{item.ksjhmc,jdbcType=VARCHAR},
+            #{item.yjxh,jdbcType=VARCHAR}, #{item.kmmc,jdbcType=VARCHAR},
+            #{item.ksh,jdbcType=VARCHAR}, #{item.kklxmc,jdbcType=VARCHAR},
+            #{item.kmlx,jdbcType=TINYINT}, #{item.fslkscj,jdbcType=TINYINT},
+            #{item.cjfx1,jdbcType=DECIMAL}, #{item.cjfx2,jdbcType=DECIMAL})
+        </foreach>
+    </insert>
+
+    <update id="updateById" parameterType="edu.qhjy.score_service.domain.entity.KscjEntity">
+        UPDATE kscj
+        SET ksjhdm   = #{ksjhdm,jdbcType=VARCHAR},
+            yjxh     = #{yjxh,jdbcType=VARCHAR},
+            kmmc     = #{kmmc,jdbcType=VARCHAR},
+            ksh      = #{ksh,jdbcType=VARCHAR},
+            kklxmc   = #{kklxmc,jdbcType=VARCHAR},
+            kmlx     = #{kmlx,jdbcType=TINYINT},
+            fslkscj  = #{fslkscj,jdbcType=TINYINT},
+            cjfx1    = #{cjfx1,jdbcType=DECIMAL},
+            cjfx2    = #{cjfx2,jdbcType=DECIMAL},
+            cjdjm    = #{cjdjm,jdbcType=VARCHAR},
+            cjhgm    = #{cjhgm,jdbcType=VARCHAR},
+            shjd     = #{shjd,jdbcType=VARCHAR},
+            shzt     = #{shzt,jdbcType=VARCHAR},
+            shsj     = #{shsj,jdbcType=TIMESTAMP},
+            shrxm    = #{shrxm,jdbcType=VARCHAR},
+            shyj     = #{shyj,jdbcType=VARCHAR},
+            gxrxm    = #{gxrxm,jdbcType=VARCHAR},
+            gxrgzrym = #{gxrgzrym,jdbcType=VARCHAR},
+            gxsj     = #{gxsj,jdbcType=TIMESTAMP}
+        WHERE kscjbs = #{kscjbs,jdbcType=BIGINT}
+    </update>
+
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE
+        FROM kscj
+        WHERE kscjbs = #{kscjbs,jdbcType=BIGINT}
+    </delete>
+
+    <delete id="deleteByKshAndKmmc">
+        DELETE
+        FROM kscj
+        WHERE ksh = #{ksh,jdbcType=VARCHAR}
+          AND kmmc = #{kmmc,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteByKmmc" parameterType="java.lang.String">
+        DELETE
+        FROM kscj
+        WHERE kmmc = #{kmmc,jdbcType=VARCHAR}
+    </delete>
+
+    <select id="selectStudentInfoForTemplate" resultMap="BaseResultMap">
+        SELECT DISTINCT k.ksh,
+                        s.xm as ksxm,
+                        s.bjmc,
+                        s.xxmc,
+                        s.szsmc,
+                        kq.kqmc,
+                        k.ksjhdm,
+                        k.kmmc
+        FROM kscj k
+                 LEFT JOIN ksxx s ON k.ksh = s.ksh
+                 LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+          AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+          AND k.kklxmc = '正考'
+        ORDER BY k.ksh
+    </select>
+
+    <!-- 根据考生号列表、考试计划代码和科目名称批量删除成绩记录（用于DBF导入覆盖模式） -->
+    <delete id="deleteByKshListAndKsjhdmAndKmmc">
+        DELETE FROM kscj
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND ksh IN
+        <foreach collection="kshList" item="ksh" open="(" separator="," close=")">
+            #{ksh,jdbcType=VARCHAR}
+        </foreach>
+    </delete>
+
+
+    <delete id="clearTempImportTable">
+        TRUNCATE TABLE TMP_KSCJ_IMPORT
+    </delete>
+
+    <insert id="batchInsertIntoTempTable" parameterType="java.util.List">
+        INSERT INTO TMP_KSCJ_IMPORT (ksjhdm, ksjhmc, yjxh, kmmc, ksh, kklxmc, kmlx, fslkscj, cjfx1, cjfx2)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.ksjhdm,jdbcType=VARCHAR}, #{item.ksjhmc,jdbcType=VARCHAR},
+            #{item.yjxh,jdbcType=VARCHAR}, #{item.kmmc,jdbcType=VARCHAR},
+            #{item.ksh,jdbcType=VARCHAR}, #{item.kklxmc,jdbcType=VARCHAR},
+            #{item.kmlx,jdbcType=TINYINT}, #{item.fslkscj,jdbcType=TINYINT},
+            #{item.cjfx1,jdbcType=DECIMAL}, #{item.cjfx2,jdbcType=DECIMAL}
+            )
+        </foreach>
+    </insert>
+
+    <update id="mergeFromTempTable">
+        MERGE INTO kscj TGT
+    USING TMP_KSCJ_IMPORT SRC
+    ON (TGT.ksjhdm = SRC.ksjhdm AND TGT.kmmc = SRC.kmmc AND TGT.ksh = SRC.ksh)
+    WHEN MATCHED THEN
+        UPDATE SET
+            TGT.ksjhmc = SRC.ksjhmc,
+            TGT.yjxh = SRC.yjxh,
+            TGT.kklxmc = SRC.kklxmc,
+            TGT.kmlx = SRC.kmlx,
+            TGT.fslkscj = SRC.fslkscj,
+            TGT.cjfx1 = SRC.cjfx1,
+            TGT.cjfx2 = SRC.cjfx2,
+            TGT.cjfx3 = SRC.cjfx3,
+            TGT.gxrxm = '系统导入',
+            TGT.gxsj = NOW()
+            WHEN NOT MATCHED THEN
+        INSERT (ksjhdm, ksjhmc, yjxh, kmmc, ksh, kklxmc, kmlx, fslkscj, cjfx1, cjfx2)
+            VALUES (SRC.ksjhdm, SRC.ksjhmc, SRC.yjxh, SRC.kmmc, SRC.ksh, SRC.kklxmc, SRC.kmlx, SRC.fslkscj, SRC.cjfx1, SRC.cjfx2);
+    </update>
+    <!-- ==================== 新增统计分析SQL ==================== -->
+
+    <!-- 查询区域成绩统计分布（柱状图数据） -->
+    <select id="selectAreaScoreStatistics" resultType="java.util.Map">
+        SELECT
+        <choose>
+            <when test="areaLevel == 'city'">
+                s.szsmc as area_name,
+                s.szsmc as area_code
+            </when>
+            <when test="areaLevel == 'county'">
+                s.kqmc as area_name,
+                s.kqmc as area_code,
+                s.szsmc as parent_name
+            </when>
+            <when test="areaLevel == 'school'">
+                s.xxmc as area_name,
+                s.xxmc as area_code,
+                s.kqmc as parent_name
+            </when>
+            <when test="areaLevel == 'class'">
+                s.bjmc as area_name,
+                s.bjmc as area_code,
+                s.xxmc as parent_name
+            </when>
+        </choose>
+        ,
+        COUNT(*) as total_count,
+        AVG(k.fslkscj) as avg_score,
+        MAX(k.fslkscj) as max_score,
+        MIN(k.fslkscj) as min_score,
+        COUNT(CASE WHEN k.cjhgm = <![CDATA['合格']]> THEN 1 END) as pass_count,
+        ROUND(COUNT(CASE WHEN k.cjhgm = <![CDATA['合格']]> THEN 1 END) * 100.0 / COUNT(*), 2) as pass_rate
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.kklxmc = '正考'
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+        GROUP BY
+        <choose>
+            <when test="areaLevel == 'city'">
+                s.szsmc
+            </when>
+            <when test="areaLevel == 'county'">
+                s.kqmc, s.szsmc
+            </when>
+            <when test="areaLevel == 'school'">
+                s.xxmc, s.kqmc
+            </when>
+            <when test="areaLevel == 'class'">
+                s.bjmc, s.xxmc
+            </when>
+        </choose>
+        ORDER BY avg_score DESC
+    </select>
+
+    <!-- 查询科目成绩等级分布（饼图数据） -->
+    <select id="selectSubjectGradeDistribution" resultType="java.util.Map">
+        SELECT * FROM (
+        -- 等级分布数据
+        SELECT 'A' as grade_code, null as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.cjdjm = 'A'
+        AND k.kklxmc = '正考'
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        SELECT 'B' as grade_code, null as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.cjdjm = 'B'
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        SELECT 'C' as grade_code, null as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.cjdjm = 'C'
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        SELECT 'D' as grade_code, null as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.cjdjm = 'D'
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        SELECT 'E' as grade_code, null as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.cjdjm = 'E'
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        -- 分数段分布数据
+        SELECT null as grade_code, '90-100' as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.fslkscj >= 90
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        SELECT null as grade_code, '80-89' as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.fslkscj >= 80 AND k.fslkscj &lt; 90
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        SELECT null as grade_code, '70-79' as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.fslkscj >= 70 AND k.fslkscj &lt; 80
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        SELECT null as grade_code, '60-69' as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.fslkscj >= 60 AND k.fslkscj &lt; 70
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+
+        UNION ALL
+
+        SELECT null as grade_code, '0-59' as score_range, COUNT(*) as count
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.fslkscj &lt; 60
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND s.szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND s.kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND s.xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND s.bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+        ) AS distribution_data
+        WHERE count > 0
+        ORDER BY grade_code, score_range
+    </select>
+
+    <!-- 查询历史成绩趋势数据（折线图数据） -->
+    <select id="selectHistoricalTrends" resultType="java.util.Map">
+        SELECT
+        ksjhdm as exam_plan_code,
+        SUBSTRING(ksjhdm, 1, 4) as year,
+        SUBSTRING(ksjhdm, 5, 2) as period,
+        COUNT(*) as total_count,
+        AVG(fslkscj) as avg_score,
+        MAX(fslkscj) as max_score,
+        MIN(fslkscj) as min_score,
+        COUNT(CASE WHEN cjhgm = <![CDATA['合格']]> THEN 1 END) as pass_count,
+        ROUND(COUNT(CASE WHEN cjhgm = <![CDATA['合格']]> THEN 1 END) * 100.0 / COUNT(*), 2) as pass_rate
+        FROM kscj
+        WHERE kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND SUBSTRING(ksjhdm, 1, 4) BETWEEN #{startYear,jdbcType=VARCHAR} AND #{endYear,jdbcType=VARCHAR}
+        AND kklxmc = '正考'
+        <if test="areaCode != null and areaCode != ''">
+            <choose>
+                <when test="areaLevel == 'city'">
+                    AND szsmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'county'">
+                    AND kqmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'school'">
+                    AND xxmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+                <when test="areaLevel == 'class'">
+                    AND bjmc = #{areaCode,jdbcType=VARCHAR}
+                </when>
+            </choose>
+        </if>
+        GROUP BY ksjhdm
+        ORDER BY ksjhdm
+    </select>
+
+    <!-- 查询可用的考试计划列表 -->
+    <select id="selectAvailableExamPlans" resultType="java.lang.String">
+        SELECT DISTINCT ksjhdm
+        FROM kscj
+        WHERE kklxmc = '正考'
+        <if test="kmmc != null and kmmc != ''">
+            AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        </if>
+        ORDER BY ksjhdm DESC
+    </select>
+
+    <!-- 查询区域层级数据 -->
+    <select id="selectAreaHierarchy" resultType="java.util.Map">
+        <choose>
+            <!-- 地市 -->
+            <when test="areaLevel == 'city'">
+                SELECT
+                k.SSXZQHMC AS area_name,
+                k.SSXZQHDM AS area_code,
+                'city' AS area_level,
+                NULL AS parent_code,
+                NULL AS parent_name,
+                COUNT(DISTINCT k.KQMC) AS children_count
+                FROM kqxx k
+                WHERE k.SSXZQHMC IS NOT NULL
+                GROUP BY k.SSXZQHMC, k.SSXZQHDM
+                ORDER BY k.SSXZQHMC
+            </when>
+
+            <!-- 考区 / 区县 -->
+            <when test="areaLevel == 'county'">
+                SELECT
+                k.KQMC AS area_name,
+                k.KQDM AS area_code,
+                k.SSXZQHMC AS parent_name,
+                k.SSXZQHDM AS parent_code,
+                'county' AS area_level,
+                COUNT(DISTINCT x.XXMC) AS children_count
+                FROM kqxx k
+                LEFT JOIN xxjbxx x ON k.KQMC = x.KQMC
+                WHERE k.KQMC IS NOT NULL
+                <if test="parentName != null and parentName != ''">
+                    AND k.SSXZQHMC = #{parentName}
+                </if>
+                GROUP BY k.KQMC, k.KQDM, k.SSXZQHMC, k.SSXZQHDM
+                ORDER BY k.KQMC
+            </when>
+
+            <!-- 学校 -->
+            <when test="areaLevel == 'school'">
+                SELECT
+                x.XXMC AS area_name,
+                x.XXDM AS area_code,
+                x.KQMC AS parent_name,
+                x.KQDM AS parent_code,
+                'school' AS area_level,
+                COUNT(DISTINCT b.JB) AS children_count
+                FROM xxjbxx x
+                LEFT JOIN BJXX b ON x.XXDM = b.XXDM
+                WHERE x.XXMC IS NOT NULL
+                <if test="parentName != null and parentName != ''">
+                    AND x.KQMC = #{parentName}
+                </if>
+                GROUP BY x.XXMC, x.XXDM, x.KQMC, x.KQDM
+                ORDER BY x.XXMC
+            </when>
+
+            <!-- 年级 -->
+            <when test="areaLevel == 'grade'">
+                SELECT
+                CAST(b.JB AS VARCHAR(10)) AS area_name,
+                CAST(b.JB AS VARCHAR(10)) AS area_code,
+                x.XXMC AS parent_name,
+                x.XXDM AS parent_code,
+                'grade' AS area_level,
+                COUNT(DISTINCT b.BJBS) AS children_count
+                FROM xxjbxx x
+                LEFT JOIN BJXX b ON x.XXDM = b.XXDM
+                WHERE b.JB IS NOT NULL
+                <if test="parentName != null and parentName != ''">
+                    AND x.XXMC = #{parentName,jdbcType=VARCHAR}
+                </if>
+                GROUP BY b.JB, x.XXMC, x.XXDM
+                ORDER BY CAST(b.JB AS INTEGER) DESC
+            </when>
+
+            <!-- 班级 -->
+            <when test="areaLevel == 'class'">
+                SELECT
+                b.BJMC AS area_name,
+                CAST(b.BJBS AS VARCHAR(20)) AS area_code,
+                CAST(b.JB AS VARCHAR(10)) || '级' AS parent_name,
+                x.XXDM AS parent_code,
+                'class' AS area_level,
+                0 AS children_count
+                FROM BJXX b
+                JOIN xxjbxx x ON b.XXDM = x.XXDM
+                WHERE b.BJBS IS NOT NULL
+                <if test="parentName != null and parentName != ''">
+                    AND CONCAT(x.XXMC, CAST(b.JB AS VARCHAR(10))) = #{parentName,jdbcType=VARCHAR}
+                </if>
+                ORDER BY b.BJMC
+            </when>
+        </choose>
+    </select>
+
+    <!-- 查询可用的科目列表 -->
+    <select id="selectAvailableSubjects" resultType="java.lang.String">
+        SELECT DISTINCT kmmc
+        FROM kscj
+        WHERE kklxmc = '正考'
+        ORDER BY kmmc
+    </select>
+
+    <!-- 查询考试计划科目统计信息 -->
+    <select id="selectExamPlanSubjectStatistics" resultType="java.util.Map">
+        SELECT
+        k.ksjhdm,
+        k.kmmc,
+        COUNT(DISTINCT k.ksh) as student_count
+        FROM kscj k
+        WHERE k.kklxmc = '正考'
+        <if test="ksjhdm != null and ksjhdm != ''">
+            AND k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        </if>
+        GROUP BY k.ksjhdm, k.kmmc
+        ORDER BY k.ksjhdm DESC, k.kmmc
+    </select>
+
+    <!-- ==================== 等级赋分相关SQL ==================== -->
+
+    <!-- 查询学生成绩排名信息（用于等级赋分） -->
+    <select id="selectStudentScoreRanks" resultType="edu.qhjy.score_service.domain.dto.StudentScoreRankDTO">
+        SELECT
+        k.kscjbs,
+        k.ksh,
+        s.xm as ksxm,
+        s.szsmc,
+        kq.kqmc,
+        s.xxmc,
+        s.bjmc,
+        k.fslkscj,
+        ROW_NUMBER() OVER (ORDER BY k.fslkscj DESC, k.ksh ASC) as rankNum,
+        COUNT(*) OVER () as totalCount
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.fslkscj IS NOT NULL
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="szsmc != null and szsmc != ''">
+            AND s.szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        ORDER BY k.fslkscj DESC, k.ksh ASC
+    </select>
+
+    <!-- 查询可用于等级赋分的城市列表 -->
+    <select id="selectCitiesForGradeAssignment" resultType="java.lang.String">
+        SELECT DISTINCT s.szsmc
+        FROM kscj k
+                 LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+          AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+          AND k.kklxmc = '正考'
+          AND s.szsmc IS NOT NULL
+        ORDER BY s.szsmc
+    </select>
+
+    <!-- 批量更新学生等级 -->
+    <update id="batchUpdateGrades">
+        UPDATE kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        SET k.cjdjm = CASE
+        WHEN k.fslkscj >= #{gradeAThreshold,jdbcType=TINYINT} THEN 'A'
+        WHEN k.fslkscj >= #{gradeBThreshold,jdbcType=TINYINT} THEN 'B'
+        WHEN k.fslkscj >= #{gradeCThreshold,jdbcType=TINYINT} THEN 'C'
+        WHEN k.fslkscj >= #{gradeDThreshold,jdbcType=TINYINT} THEN 'D'
+        ELSE 'E'
+        END,
+        k.cjhgm = CASE
+        WHEN k.kmlx = 0 THEN
+        CASE
+        WHEN k.fslkscj >= #{gradeDThreshold,jdbcType=TINYINT} THEN '合格'
+        ELSE '不合格'
+        END
+        ELSE k.cjhgm
+        END,
+        k.gxsj = NOW(),
+        k.gxrxm = #{operatorName,jdbcType=VARCHAR}
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="szsmc != null and szsmc != ''">
+            AND s.szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+    </update>
+
+    <!-- 查询等级分布统计 -->
+    <select id="selectGradeDistributionStats" resultType="java.util.Map">
+        <choose>
+            <!-- 当szsmc为空时，按市州分组返回所有市州的等级分布数据 -->
+            <when test="szsmc == null or szsmc == ''">
+                SELECT
+                s.szsmc,
+                w.szsxh,
+                COALESCE(k.cjdjm, 'UNGRADED') as grade,
+                COUNT(*) as count,
+                ROUND(COUNT(*) * 100.0 / (
+                SELECT COUNT(*)
+                FROM kscj k2
+                LEFT JOIN ksxx s2 ON k2.ksh = s2.ksh
+                WHERE k2.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+                AND k2.kmmc = #{kmmc,jdbcType=VARCHAR}
+                AND k2.kklxmc = '正考'
+                AND s2.szsmc = s.szsmc
+                ), 2) as percentage,
+                MIN(k.fslkscj) as minScore,
+                MAX(k.fslkscj) as maxScore,
+                AVG(k.fslkscj) as avgScore
+                FROM kscj k
+                LEFT JOIN ksxx s ON k.ksh = s.ksh
+                LEFT JOIN (
+                SELECT DISTINCT szsmc, szsxh
+                FROM WCXX
+                WHERE szsxh IS NOT NULL
+                ) w ON s.szsmc = w.szsmc
+                WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+                AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+                AND k.kklxmc = '正考'
+                AND s.szsmc IS NOT NULL
+                GROUP BY s.szsmc, w.szsxh, COALESCE(k.cjdjm, 'UNGRADED')
+                ORDER BY w.szsxh, COALESCE(k.cjdjm, 'UNGRADED')
+            </when>
+            <!-- 当szsmc有值时，返回指定市州的等级分布数据 -->
+            <otherwise>
+                SELECT
+                s.szsmc,
+                w.szsxh,
+                COALESCE(k.cjdjm, 'UNGRADED') as grade,
+                COUNT(*) as count,
+                ROUND(COUNT(*) * 100.0 / (
+                SELECT COUNT(*)
+                FROM kscj k2
+                LEFT JOIN ksxx s2 ON k2.ksh = s2.ksh
+                WHERE k2.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+                AND k2.kmmc = #{kmmc,jdbcType=VARCHAR}
+                AND k2.kklxmc = '正考'
+                AND s2.szsmc = #{szsmc,jdbcType=VARCHAR}
+                ), 2) as percentage,
+                MIN(k.fslkscj) as minScore,
+                MAX(k.fslkscj) as maxScore,
+                AVG(k.fslkscj) as avgScore
+                FROM kscj k
+                LEFT JOIN ksxx s ON k.ksh = s.ksh
+                LEFT JOIN (
+                SELECT DISTINCT szsmc, szsxh
+                FROM WCXX
+                WHERE szsxh IS NOT NULL
+                ) w ON s.szsmc = w.szsmc
+                WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+                AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+                AND k.kklxmc = '正考'
+                AND s.szsmc = #{szsmc,jdbcType=VARCHAR}
+                GROUP BY s.szsmc, w.szsxh, COALESCE(k.cjdjm, 'UNGRADED')
+                ORDER BY COALESCE(k.cjdjm, 'UNGRADED')
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 清除学生等级信息 -->
+    <update id="clearStudentGrades">
+        UPDATE kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        SET k.cjdjm = NULL,
+        k.cjhgm = CASE
+        WHEN k.kmlx = 0 THEN NULL
+        ELSE k.cjhgm
+        END,
+        k.gxsj = NOW()
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.kklxmc = '正考'
+        <if test="szsmc != null and szsmc != ''">
+            AND s.szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        AND (k.cjdjm IS NOT NULL AND k.cjdjm != '')
+    </update>
+
+    <!-- ==================== 一分一段表相关SQL ==================== -->
+
+    <!-- 获取基础统计数据 -->
+    <select id="getBasicStatistics" resultType="java.util.Map">
+        SELECT k.ksjhdm,
+               COUNT(*)          as totalCount,
+               MAX(k.fslkscj)    as maxScore,
+               MIN(k.fslkscj)    as minScore,
+               AVG(k.fslkscj)    as avgScore,
+               STDDEV(k.fslkscj) as stdDev
+        FROM kscj k
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+          AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+          AND k.fslkscj IS NOT NULL
+          AND k.kklxmc = '正考'
+        GROUP BY k.ksjhdm
+    </select>
+
+    <!-- 获取市州统计数据 -->
+    <select id="getCityStatistics" resultType="java.util.Map">
+        SELECT s.szsmc,
+               COUNT(*)       as count,
+               AVG(k.fslkscj) as avgScore,
+               MAX(k.fslkscj) as maxScore,
+               MIN(k.fslkscj) as minScore
+        FROM kscj k
+                 LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+          AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+          AND k.fslkscj IS NOT NULL
+          AND k.kklxmc = '正考'
+          AND s.szsmc IS NOT NULL
+        GROUP BY s.szsmc
+        ORDER BY avgScore DESC
+    </select>
+
+    <!-- 获取考试计划下的市州列表 -->
+    <select id="getCitiesByExamPlan" resultType="java.lang.String">
+        SELECT DISTINCT s.szsmc
+        FROM kscj k
+                 LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+          AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+          AND s.szsmc IS NOT NULL
+          AND k.kklxmc = '正考'
+        ORDER BY s.szsmc
+    </select>
+
+    <!-- 获取学生成绩排名数据（支持多市州） -->
+    <select id="getStudentScoreRanks" resultType="edu.qhjy.score_service.domain.dto.StudentScoreRankDTO">
+        SELECT
+        k.kscjbs,
+        k.ksh,
+        s.xm as ksxm,
+        s.szsmc,
+        kq.kqmc,
+        s.xxmc,
+        s.bjmc,
+        k.fslkscj,
+        COALESCE(k.cjdjm, 'UNGRADED') as grade,
+        ROW_NUMBER() OVER (ORDER BY k.fslkscj DESC, k.ksh ASC) as rankNum
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.fslkscj IS NOT NULL
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="cities != null and cities.size() &gt; 0">
+            AND s.szsmc IN
+            <foreach collection="cities" item="city" open="(" separator="," close=")">
+                #{city,jdbcType=VARCHAR}
+            </foreach>
+        </if>
+        ORDER BY k.fslkscj DESC, k.ksh ASC
+    </select>
+
+    <!-- 获取历史考试计划（包含成绩数据） -->
+    <select id="getHistoricalExamPlansWithScores"
+            resultType="edu.qhjy.score_service.domain.vo.ExamPlanSubjectStatisticsVO">
+        SELECT k.ksjhdm,
+               k.kmmc,
+               COUNT(DISTINCT k.ksh)   as studentCount,
+               COUNT(DISTINCT s.szsmc) as cityCount,
+               AVG(k.fslkscj)          as avgScore,
+               MAX(k.fslkscj)          as maxScore,
+               MIN(k.fslkscj)          as minScore
+        FROM kscj k
+                 LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.fslkscj IS NOT NULL
+          AND k.kklxmc = '正考'
+          AND s.szsmc IS NOT NULL
+        GROUP BY k.ksjhdm, k.kmmc
+        HAVING COUNT(DISTINCT k.ksh) > 0
+        ORDER BY k.ksjhdm DESC, k.kmmc
+    </select>
+
+    <!-- 获取指定考试计划和科目的分数范围 -->
+    <select id="getScoreRange" resultType="java.util.Map">
+        SELECT
+        ROUND(MIN(k.fslkscj)) as min_score,
+        ROUND(MAX(k.fslkscj)) as max_score
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.fslkscj IS NOT NULL
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+        <if test="cities != null and cities.size() &gt; 0">
+            AND s.szsmc IN
+            <foreach collection="cities" item="city" open="(" separator="," close=")">
+                #{city,jdbcType=VARCHAR}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- 学生数据分页查询 -->
+    <select id="selectStudentDataWithPagination" resultType="edu.qhjy.score_service.domain.vo.StudentDataVO">
+        SELECT
+        k.kscjbs,
+        k.ksh,
+        s.xm as ksxm,
+        s.xxmc,
+        kq.kqmc,
+        s.szsmc,
+        s.bjmc,
+        k.kmmc,
+        k.ksjhdm,
+        k.fslkscj,
+        k.cjhgm,
+        k.cjdjm,
+        k.kklxmc,
+        k.cjsj,
+        0 as kmlx,
+        k.CJFX1 as kgtcj,
+        k.CJFX2 as zgtcj,
+        k.SHZT as shzt,
+        k.SHSJ as shsj,
+        k.SHRXM as shrxm
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        WHERE 1=1
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+
+        <!-- 考试计划代码 -->
+        <if test="query.ksjhdm != null and query.ksjhdm != ''">
+            AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 科目名称 -->
+        <if test="query.kmmc != null and query.kmmc != ''">
+            AND k.kmmc = #{query.kmmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 地市名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND EXISTS (
+            SELECT 1 FROM kqxx kq
+            WHERE kq.kqmc = s.kqmc
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+            )
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.xxmc = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考籍号 -->
+        <if test="query.ksh != null and query.ksh != ''">
+            AND k.ksh = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 班级名称 -->
+        <if test="query.bjmc != null and query.bjmc != ''">
+            AND s.bjmc = #{query.bjmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 成绩范围筛选 -->
+        <if test="query.minScore != null">
+            AND k.fslkscj &gt;= #{query.minScore,jdbcType=TINYINT}
+        </if>
+        <if test="query.maxScore != null">
+            AND k.fslkscj &lt;= #{query.maxScore,jdbcType=TINYINT}
+        </if>
+
+        <!-- 合格评定筛选 -->
+        <if test="query.cjhgm != null and query.cjhgm != ''">
+            AND k.cjhgm = #{query.cjhgm,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 等第筛选 -->
+        <if test="query.cjdjm != null and query.cjdjm != ''">
+            AND k.cjdjm = #{query.cjdjm,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 只显示有成绩的记录 -->
+        <if test="query.onlyWithScore != null and query.onlyWithScore">
+            AND k.fslkscj IS NOT NULL
+        </if>
+
+        <!-- 动态排序 -->
+        ORDER BY
+        <choose>
+            <when test="query.sortField == 'kscjbs'">
+                k.kscjbs
+                <if test="query.sortOrder == 'desc'">DESC</if>
+                <if test="query.sortOrder == 'asc' or query.sortOrder == null">ASC</if>
+            </when>
+            <when test="query.sortField == 'fslkscj'">
+                k.fslkscj
+                <if test="query.sortOrder == 'desc'">DESC</if>
+                <if test="query.sortOrder == 'asc' or query.sortOrder == null">ASC</if>
+            </when>
+            <otherwise>
+                k.ksh
+                <if test="query.sortOrder == 'desc'">DESC</if>
+                <if test="query.sortOrder == 'asc' or query.sortOrder == null">ASC</if>
+            </otherwise>
+        </choose>
+        , k.kmmc
+        LIMIT #{query.offset}, #{query.limit}
+    </select>
+
+    <!-- 统计学生数据总数 -->
+    <select id="countStudentData" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        WHERE 1=1
+        AND k.kklxmc = '正考'
+        AND s.szsmc IS NOT NULL
+
+        <!-- 考试计划代码 -->
+        <if test="query.ksjhdm != null and query.ksjhdm != ''">
+            AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 科目名称 -->
+        <if test="query.kmmc != null and query.kmmc != ''">
+            AND k.kmmc = #{query.kmmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 地市名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.xxmc = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考籍号 -->
+        <if test="query.ksh != null and query.ksh != ''">
+            AND k.ksh = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 班级名称 -->
+        <if test="query.bjmc != null and query.bjmc != ''">
+            AND s.bjmc = #{query.bjmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 成绩范围筛选 -->
+        <if test="query.minScore != null">
+            AND k.fslkscj &gt;= #{query.minScore,jdbcType=DECIMAL}
+        </if>
+        <if test="query.maxScore != null">
+            AND k.fslkscj &lt;= #{query.maxScore,jdbcType=DECIMAL}
+        </if>
+
+        <!-- 合格评定筛选 -->
+        <if test="query.cjhgm != null and query.cjhgm != ''">
+            AND k.cjhgm = #{query.cjhgm,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 等第筛选 -->
+        <if test="query.cjdjm != null and query.cjdjm != ''">
+            AND k.cjdjm = #{query.cjdjm,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 只显示有成绩的记录 -->
+        <if test="query.onlyWithScore != null and query.onlyWithScore">
+            AND k.fslkscj IS NOT NULL
+        </if>
+    </select>
+
+    <!-- ==================== 成绩查询相关SQL（支持级联查询） ==================== -->
+
+    <!-- ResultMap for GradeQueryVO with scores collection -->
+    <resultMap id="GradeQueryVOResultMap" type="edu.qhjy.score_service.domain.vo.GradeQueryVO">
+        <id property="ksh" column="ksh"/>
+        <result property="xm" column="xm"/>
+        <result property="sfzjh" column="sfzjh"/>
+        <result property="grade" column="grade"/>
+        <result property="bj" column="bj"/>
+        <result property="xb" column="xb"/>
+        <result property="mz" column="mz"/>
+        <result property="szsmc" column="szsmc"/>
+        <result property="kqmc" column="kqmc"/>
+        <result property="xxmc" column="xxmc"/>
+    </resultMap>
+
+    <!-- 分页查询成绩数据（支持级联查询） -->
+    <select id="selectGradeDataWithPagination" resultType="edu.qhjy.score_service.domain.vo.GradeQueryVO">
+        SELECT
+        s.ksh,
+        s.xm,
+        s.sfzjh,
+        CAST(s.rxnd AS VARCHAR(10)) as grade,
+        s.bjmc as bj,
+        s.xb,
+        s.mz,
+        s.szsmc,
+        kq.kqmc,
+        s.xxmc,
+        LISTAGG(
+        CASE
+        WHEN k.kklxmc = '缺考' THEN CONCAT(k.kmmc, ':Q')
+        WHEN k.kmlx = 0 THEN CONCAT(k.kmmc, ':', k.cjdjm)
+        WHEN k.kmlx = 1 THEN CONCAT(k.kmmc, ':', k.cjhgm)
+        ELSE CONCAT(k.kmmc, ':N/A')
+        END, '|'
+        ) as scoreData
+        FROM ksxx s
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        <if test="query.ksjhdm != null and query.ksjhdm != ''">
+            INNER JOIN kscj k ON s.ksh = k.ksh
+            <choose>
+                <when test="query.onlyWithScores != null and query.onlyWithScores == false">
+                    AND k.kklxmc IN ('正考', '缺考')
+                </when>
+                <otherwise>
+                    AND k.kklxmc = '正考'
+                </otherwise>
+            </choose>
+            AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+            <if test="query.kmlx != null">
+                AND k.kmlx = #{query.kmlx,jdbcType=INTEGER}
+            </if>
+        </if>
+        <if test="query.ksjhdm == null or query.ksjhdm == ''">
+            LEFT JOIN kscj k ON s.ksh = k.ksh
+        </if>
+        WHERE 1=1
+
+        <!-- 地市名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.xxmc = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 年级（入学年度） -->
+        <if test="query.grade != null and query.grade != ''">
+            AND CAST(s.rxnd AS VARCHAR(10)) = #{query.grade,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 班级名称 -->
+        <if test="query.bjmc != null and query.bjmc != ''">
+            AND s.bjmc = #{query.bjmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考籍号 -->
+        <if test="query.ksh != null and query.ksh != ''">
+            AND s.ksh = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+
+        GROUP BY s.ksh, s.xm, s.sfzjh, s.rxnd, s.bjmc, s.xb, s.mz, s.szsmc, kq.kqmc, s.xxmc
+
+        <!-- 动态排序 -->
+        ORDER BY
+        <choose>
+            <when test="query.sortField == 'xm'">
+                s.xm
+                <if test="query.sortOrder == 'desc'">DESC</if>
+                <if test="query.sortOrder == 'asc' or query.sortOrder == null">ASC</if>
+            </when>
+            <otherwise>
+                s.ksh
+                <if test="query.sortOrder == 'desc'">DESC</if>
+                <if test="query.sortOrder == 'asc' or query.sortOrder == null">ASC</if>
+            </otherwise>
+        </choose>
+        LIMIT #{query.offset}, #{query.limit}
+    </select>
+
+    <!-- 分页查询成绩数据（使用ResultHandler处理） -->
+    <select id="selectGradeDataWithResultHandler" resultType="java.util.HashMap">
+        SELECT
+        s.ksh,
+        s.xm,
+        s.sfzjh,
+        CAST(s.rxnd AS VARCHAR(10)) as grade,
+        s.bjmc as bj,
+        s.xb,
+        s.mz,
+        s.szsmc,
+        kq.kqmc,
+        s.xxmc,
+        k.kmmc,
+        CASE
+        WHEN k.kklxmc = '缺考' THEN 'Q'
+        WHEN k.kmlx = 0 THEN k.cjdjm
+        WHEN k.kmlx = 1 THEN k.cjhgm
+        ELSE ''
+        END as score_value
+        FROM ksxx s
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        <if test="query.ksjhdm != null and query.ksjhdm != ''">
+            INNER JOIN kscj k ON s.ksh = k.ksh
+            <choose>
+                <when test="query.onlyWithScores != null and query.onlyWithScores == false">
+                    AND k.kklxmc IN ('正考', '缺考')
+                </when>
+                <otherwise>
+                    AND k.kklxmc = '正考'
+                </otherwise>
+            </choose>
+            AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+            <if test="query.kmlx != null">
+                AND k.kmlx = #{query.kmlx,jdbcType=INTEGER}
+            </if>
+        </if>
+        <if test="query.ksjhdm == null or query.ksjhdm == ''">
+            LEFT JOIN kscj k ON s.ksh = k.ksh
+        </if>
+        WHERE 1=1
+
+        <!-- 地市名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.xxmc = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 年级（入学年度） -->
+        <if test="query.grade != null and query.grade != ''">
+            AND CAST(s.rxnd AS VARCHAR(10)) = #{query.grade,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 班级名称 -->
+        <if test="query.bjmc != null and query.bjmc != ''">
+            AND s.bjmc = #{query.bjmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考籍号 -->
+        <if test="query.ksh != null and query.ksh != ''">
+            AND s.ksh = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 动态排序 -->
+        ORDER BY
+        <choose>
+            <when test="query.sortField == 'xm'">
+                s.xm
+                <if test="query.sortOrder == 'desc'">DESC</if>
+                <if test="query.sortOrder == 'asc' or query.sortOrder == null">ASC</if>
+            </when>
+            <otherwise>
+                s.ksh
+                <if test="query.sortOrder == 'desc'">DESC</if>
+                <if test="query.sortOrder == 'asc' or query.sortOrder == null">ASC</if>
+            </otherwise>
+        </choose>
+        LIMIT #{query.offset}, #{query.limit}
+    </select>
+
+    <!-- 统计成绩数据总数（支持级联查询） -->
+    <select id="countGradeData" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT s.ksh)
+        FROM ksxx s
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        <if test="query.ksjhdm != null and query.ksjhdm != ''">
+            INNER JOIN kscj k ON s.ksh = k.ksh
+            <choose>
+                <when test="query.onlyWithScores != null and query.onlyWithScores == false">
+                    AND k.kklxmc IN ('正考', '缺考')
+                </when>
+                <otherwise>
+                    AND k.kklxmc = '正考'
+                </otherwise>
+            </choose>
+            AND k.kmlx = #{query.kmlx,jdbcType=INTEGER}
+            AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+        </if>
+        WHERE 1=1
+
+        <!-- 地市名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.xxmc = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 年级（入学年度） -->
+        <if test="query.grade != null and query.grade != ''">
+            AND CAST(s.rxnd AS VARCHAR(10)) = #{query.grade,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 班级名称 -->
+        <if test="query.bjmc != null and query.bjmc != ''">
+            AND s.bjmc = #{query.bjmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考籍号 -->
+        <if test="query.ksh != null and query.ksh != ''">
+            AND s.ksh = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <!-- 成绩等第册查询 - 分页查询学生基本信息和成绩数据 -->
+    <select id="selectGradeBookWithPagination"
+            resultType="edu.qhjy.score_service.domain.vo.GradeBookVO$StudentGradeData">
+        SELECT
+        s.ksh,
+        s.xm,
+        s.sfzjh,
+        s.xb,
+        LISTAGG(
+        CASE
+        WHEN k.kklxmc = '缺考' THEN CONCAT(k.kmmc, '(Q)')
+        WHEN k.kmlx = 0 THEN CONCAT(k.kmmc, '(', COALESCE(k.cjdjm, ''), ')')
+        WHEN k.kmlx = 1 THEN CONCAT(k.kmmc, '(', COALESCE(k.cjhgm, ''), ')')
+        END, ' '
+        ) WITHIN GROUP (ORDER BY k.kmlx ASC, k.kmmc ASC) as scores
+        FROM ksxx s
+        INNER JOIN kscj k ON s.ksh = k.ksh AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR} AND k.kklxmc IN ('正考',
+        '缺考')
+        WHERE 1=1
+
+        <!-- 学校条件 -->
+        <if test="query.school != null and query.school != ''">
+            AND s.xxmc = #{query.school,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 所在省名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND EXISTS (
+            SELECT 1 FROM kqxx kq
+            WHERE kq.kqmc = s.kqmc
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+            )
+        </if>
+
+        GROUP BY s.ksh, s.xm, s.sfzjh, s.xb
+        ORDER BY s.ksh
+        LIMIT #{query.offset,jdbcType=INTEGER}, #{query.limit,jdbcType=INTEGER}
+    </select>
+
+    <!-- 成绩等第册查询 - 统计总数 -->
+    <select id="countGradeBookData" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT s.ksh)
+        FROM ksxx s
+        INNER JOIN kscj k ON s.ksh = k.ksh
+        WHERE 1=1
+        AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+        AND k.kklxmc IN ('正考', '缺考')
+
+        <!-- 学校条件 -->
+        <if test="query.school != null and query.school != ''">
+            AND s.xxmc = #{query.school,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 所在省名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND EXISTS (
+            SELECT 1 FROM kqxx kq
+            WHERE kq.kqmc = s.kqmc
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+            )
+        </if>
+    </select>
+
+    <!-- 成绩等第册查询 - 查询学校基本信息 -->
+    <select id="selectSchoolInfo" resultType="java.util.Map">
+        SELECT DISTINCT
+        kq.kqmc,
+        s.xxmc
+        FROM ksxx s
+        INNER JOIN kscj k ON s.ksh = k.ksh
+        LEFT JOIN kqxx kq ON kq.kqmc = s.kqmc
+        WHERE 1=1
+        AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+        AND k.kklxmc = '正考'
+
+        <!-- 学校条件 -->
+        <if test="query.school != null and query.school != ''">
+            AND s.xxmc = #{query.school,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 所在省名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+
+        LIMIT 1
+    </select>
+
+    <!-- 保存省外转入成绩记录 -->
+    <insert id="insertOutOfProvinceScore" parameterType="edu.qhjy.score_service.domain.entity.KscjEntity">
+        INSERT INTO kscj (KSH, KSJHDM, KSJHMC, KMMC, KKLXMC, CJHGM, CJDJM,
+                          CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ)
+        VALUES (#{ksh,jdbcType=VARCHAR},
+                #{ksjhdm,jdbcType=VARCHAR},
+                #{ksjhmc,jdbcType=VARCHAR},
+                #{kmmc,jdbcType=VARCHAR},
+                #{kklxmc,jdbcType=VARCHAR},
+                #{cjhgm,jdbcType=VARCHAR},
+                #{cjdjm,jdbcType=VARCHAR},
+                #{cjrxm,jdbcType=VARCHAR},
+                #{cjrgzrym,jdbcType=VARCHAR},
+                #{cjsj,jdbcType=TIMESTAMP},
+                #{gxrxm,jdbcType=VARCHAR},
+                #{gxrgzrym,jdbcType=VARCHAR},
+                #{gxsj,jdbcType=TIMESTAMP})
+    </insert>
+
+    <!-- 批量保存省外转入成绩记录 -->
+    <insert id="batchInsertOutOfProvinceScores" parameterType="java.util.List">
+        INSERT INTO kscj (
+        KSH, KSJHDM, KSJHMC, KMMC, KKLXMC, KMLX, CJHGM, CJDJM,
+        CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.ksh,jdbcType=VARCHAR},
+            #{item.ksjhdm,jdbcType=VARCHAR},
+            #{item.ksjhmc,jdbcType=VARCHAR},
+            #{item.kmmc,jdbcType=VARCHAR},
+            #{item.kklxmc,jdbcType=VARCHAR},
+            #{item.kmlx,jdbcType=INTEGER},
+            #{item.cjhgm,jdbcType=VARCHAR},
+            #{item.cjdjm,jdbcType=VARCHAR},
+            #{item.cjrxm,jdbcType=VARCHAR},
+            #{item.cjrgzrym,jdbcType=VARCHAR},
+            #{item.cjsj,jdbcType=TIMESTAMP},
+            #{item.gxrxm,jdbcType=VARCHAR},
+            #{item.gxrgzrym,jdbcType=VARCHAR},
+            #{item.gxsj,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 删除省外转入成绩记录（根据考生号和科目名称） -->
+    <delete id="deleteOutOfProvinceScore">
+        DELETE
+        FROM kscj
+        WHERE KSH = #{ksh,jdbcType=VARCHAR}
+          AND KMMC = #{kmmc,jdbcType=VARCHAR}
+          AND KSJHDM = '0000'
+    </delete>
+
+    <!-- 删除省外转入成绩记录（根据考生号删除所有科目） -->
+    <delete id="deleteAllOutOfProvinceScoresByKsh">
+        DELETE
+        FROM kscj
+        WHERE KSH = #{ksh,jdbcType=VARCHAR}
+          AND KSJHDM = '0000'
+    </delete>
+
+    <!-- 修改省外转入成绩记录 -->
+    <update id="updateOutOfProvinceScore" parameterType="edu.qhjy.score_service.domain.entity.KscjEntity">
+        UPDATE kscj
+        SET KSJHMC   = #{ksjhmc,jdbcType=VARCHAR},
+            CJHGM    = #{cjhgm,jdbcType=VARCHAR},
+            CJDJM    = #{cjdjm,jdbcType=VARCHAR},
+            GXRXM    = #{gxrxm,jdbcType=VARCHAR},
+            GXRGZRYM = #{gxrgzrym,jdbcType=VARCHAR},
+            GXSJ     = #{gxsj,jdbcType=TIMESTAMP}
+        WHERE KSH = #{ksh,jdbcType=VARCHAR}
+          AND KMMC = #{kmmc,jdbcType=VARCHAR}
+          AND KSJHDM = '0000'
+    </update>
+
+    <!-- 根据考生号查询所有科目成绩映射（科目名称->成绩合格评定） -->
+    <select id="selectScoresByKsh" resultType="java.util.HashMap">
+        SELECT k.kmmc  as "key",
+               k.cjhgm as "value"
+        FROM kscj k
+        WHERE k.ksh = #{ksh,jdbcType=VARCHAR}
+          AND k.cjhgm IS NOT NULL
+    </select>
+
+    <!-- 分页查询考查科目成绩数据 -->
+    <select id="selectExamScoresWithPagination" resultType="edu.qhjy.score_service.domain.vo.ExamScoreVO">
+        SELECT
+        k.shzt,
+        k.shyj,
+        k.ksh,
+        s.xm,
+        s.sfzjh,
+        s.xxmc,
+        s.szsmc,
+        k.fslkscj,
+        k.cjhgm,
+        kq.kqmc,
+        s.bjmc,
+        k.shsj,
+        k.shrxm,
+        k.shjd
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        WHERE 1=1
+        AND k.kklxmc = '正考'
+        AND k.kmlx = 1
+
+        <!-- 考试计划代码 -->
+        <if test="query.ksjhdm != null and query.ksjhdm != ''">
+            AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 科目名称 -->
+        <if test="query.kmmc != null and query.kmmc != ''">
+            AND k.kmmc = #{query.kmmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 地市名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.xxmc = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考籍号 -->
+        <if test="query.ksh != null and query.ksh != ''">
+            AND k.ksh = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 成绩数据筛选 -->
+        <if test="query.withScores != null">
+            <choose>
+                <when test="query.withScores == true">
+                    <!-- 只返回有成绩数据的记录：FSLKSCJ和CJHGM字段均不为空 -->
+                    AND k.fslkscj IS NOT NULL AND k.cjhgm IS NOT NULL
+                </when>
+                <when test="query.withScores == false">
+                    <!-- 只返回没有成绩数据的记录：FSLKSCJ或CJHGM字段有一个为空 -->
+                    AND (k.fslkscj IS NULL OR k.cjhgm IS NULL)
+                </when>
+            </choose>
+        </if>
+
+        ORDER BY k.ksh ASC
+        LIMIT #{query.offset,jdbcType=INTEGER}, #{query.limit,jdbcType=INTEGER}
+    </select>
+
+    <!-- 统计考查科目成绩数据总数 -->
+    <select id="countExamScores" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM kscj k
+        LEFT JOIN ksxx s ON k.ksh = s.ksh
+        LEFT JOIN kqxx kq ON s.kqmc = kq.kqmc
+        WHERE 1=1
+        AND k.kklxmc = '正考'
+        AND k.kmlx = 1
+
+        <!-- 考试计划代码 -->
+        <if test="query.ksjhdm != null and query.ksjhdm != ''">
+            AND k.ksjhdm = #{query.ksjhdm,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 科目名称 -->
+        <if test="query.kmmc != null and query.kmmc != ''">
+            AND k.kmmc = #{query.kmmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 地市名称 -->
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.szsmc = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.kqmc = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.xxmc = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考籍号 -->
+        <if test="query.ksh != null and query.ksh != ''">
+            AND k.ksh = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 成绩数据筛选 -->
+        <if test="query.withScores != null">
+            <choose>
+                <when test="query.withScores == true">
+                    <!-- 只返回有成绩数据的记录：FSLKSCJ和CJHGM字段均不为空 -->
+                    AND k.fslkscj IS NOT NULL AND k.cjhgm IS NOT NULL
+                </when>
+                <when test="query.withScores == false">
+                    <!-- 只返回没有成绩数据的记录：FSLKSCJ或CJHGM字段有一个为空 -->
+                    AND (k.fslkscj IS NULL OR k.cjhgm IS NULL)
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <!-- 检查学生是否已存在成绩记录 -->
+    <select id="countExistingScore" resultType="int">
+        SELECT COUNT(1)
+        FROM kscj k
+        WHERE k.ksh = #{ksh,jdbcType=VARCHAR}
+          AND k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+          AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 根据条件查询报名学生信息（用于初始化） -->
+    <select id="selectStudentsForInitialize" resultType="java.util.Map">
+        SELECT DISTINCT
+        ks.ksh,
+        ks.xm,
+        ks.sfzjh as sfzh,
+        ks.xb,
+        ks.csrq,
+        ks.mz,
+        ks.zzmm,
+        ks.kslx,
+        ks.xxmc,
+        ks.bjmc,
+        ks.kqmc,
+        ks.szsmc,
+        xk.yjxh
+        FROM ksxx ks
+        INNER JOIN xkbmxx x ON ks.ksh = x.ksh AND x.zfzt = '已缴费'
+        INNER JOIN xkbmkm xk ON x.xkbmbs = xk.xkbmbs
+        WHERE x.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND xk.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND ks.szsmc = #{szsmc,jdbcType=VARCHAR}
+        <if test="kqmc != null and kqmc != ''">
+            AND ks.kqmc = #{kqmc,jdbcType=VARCHAR}
+        </if>
+        <if test="xxmc != null and xxmc != ''">
+            AND ks.xxmc = #{xxmc,jdbcType=VARCHAR}
+        </if>
+        ORDER BY ks.xxmc, ks.bjmc, ks.ksh
+    </select>
+
+    <!-- 查询已存在的考籍号列表 -->
+    <select id="selectExistingKsh" resultType="java.lang.String">
+        SELECT DISTINCT k.ksh
+        FROM kscj k
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND k.ksh IN
+        <foreach collection="kshList" item="ksh" open="(" separator="," close=")">
+            #{ksh,jdbcType=VARCHAR}
+        </foreach>
+    </select>
+
+    <!-- 批量更新成绩 -->
+    <update id="batchUpdateScores">
+        UPDATE kscj
+        SET fslkscj = CASE
+        <foreach collection="scoreUpdates" item="item">
+            WHEN ksh = #{item.ksh,jdbcType=VARCHAR} AND ksjhdm = #{item.ksjhdm,jdbcType=VARCHAR} AND kmmc =
+            #{item.kmmc,jdbcType=VARCHAR}
+            THEN #{item.fslkscj,jdbcType=TINYINT}
+        </foreach>
+        ELSE fslkscj
+        END,
+        cjhgm = CASE
+        <foreach collection="scoreUpdates" item="item">
+            WHEN ksh = #{item.ksh,jdbcType=VARCHAR} AND ksjhdm = #{item.ksjhdm,jdbcType=VARCHAR} AND kmmc =
+            #{item.kmmc,jdbcType=VARCHAR}
+            THEN #{item.cjhgm,jdbcType=VARCHAR}
+        </foreach>
+        ELSE cjhgm
+        END,
+        kklxmc = CASE
+        <foreach collection="scoreUpdates" item="item">
+            WHEN ksh = #{item.ksh,jdbcType=VARCHAR} AND ksjhdm = #{item.ksjhdm,jdbcType=VARCHAR} AND kmmc =
+            #{item.kmmc,jdbcType=VARCHAR}
+            THEN #{item.kklxmc,jdbcType=VARCHAR}
+        </foreach>
+        ELSE kklxmc
+        END,
+        gxrxm = CASE
+        <foreach collection="scoreUpdates" item="item">
+            WHEN ksh = #{item.ksh,jdbcType=VARCHAR} AND ksjhdm = #{item.ksjhdm,jdbcType=VARCHAR} AND kmmc =
+            #{item.kmmc,jdbcType=VARCHAR}
+            THEN #{item.gxrxm,jdbcType=VARCHAR}
+        </foreach>
+        ELSE gxrxm
+        END,
+        gxrgzrym = CASE
+        <foreach collection="scoreUpdates" item="item">
+            WHEN ksh = #{item.ksh,jdbcType=VARCHAR} AND ksjhdm = #{item.ksjhdm,jdbcType=VARCHAR} AND kmmc =
+            #{item.kmmc,jdbcType=VARCHAR}
+            THEN #{item.gxrgzrym,jdbcType=VARCHAR}
+        </foreach>
+        ELSE gxrgzrym
+        END,
+        gxsj = CASE
+        <foreach collection="scoreUpdates" item="item">
+            WHEN ksh = #{item.ksh,jdbcType=VARCHAR} AND ksjhdm = #{item.ksjhdm,jdbcType=VARCHAR} AND kmmc =
+            #{item.kmmc,jdbcType=VARCHAR}
+            THEN #{item.gxsj,jdbcType=TIMESTAMP}
+        </foreach>
+        ELSE gxsj
+        END
+        WHERE (ksh, ksjhdm, kmmc) IN (
+        <foreach collection="scoreUpdates" item="item" separator=",">
+            (#{item.ksh,jdbcType=VARCHAR}, #{item.ksjhdm,jdbcType=VARCHAR}, #{item.kmmc,jdbcType=VARCHAR})
+        </foreach>
+        )
+    </update>
+
+    <!-- 统计指定考试计划和科目的现有成绩记录数 -->
+    <select id="countExistingRecords" resultType="int">
+        SELECT COUNT(*)
+        FROM kscj
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+          AND kmmc = #{kmmc,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 统计指定考试计划、科目和地区的现有成绩记录数 -->
+    <select id="countExistingRecordsWithArea" resultType="int">
+        SELECT COUNT(*)
+        FROM kscj k
+        INNER JOIN ksxx ks ON k.ksh = ks.ksh
+        WHERE k.ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND k.kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND ks.szsmc = #{szsmc,jdbcType=VARCHAR}
+        <if test="kqmc != null and kqmc != ''">
+            AND ks.kqmc = #{kqmc,jdbcType=VARCHAR}
+        </if>
+        <if test="xxmc != null and xxmc != ''">
+            AND ks.xxmc = #{xxmc,jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <!-- ==================== DM8物化视图优化查询 ==================== -->
+
+    <!-- DM8物化视图查询：避免实时计算的CPU/临时区溢出 -->
+    <select id="selectGradeDataFromMV" resultType="java.util.HashMap">
+        SELECT ksh, xm, sfzjh, grade, bj, xb, mz, szsmc, kqmc, xxmc, kmmc, score_value
+        FROM mv_grade_summary
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmlx = #{kmlx,jdbcType=INTEGER}
+
+        <!-- 地市名称 -->
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="kqmc != null and kqmc != ''">
+            AND kqmc = #{kqmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="xxmc != null and xxmc != ''">
+            AND xxmc = #{xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考生号 -->
+        <if test="ksh != null and ksh != ''">
+            AND ksh = #{ksh,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 年级 -->
+        <if test="grade != null and grade != ''">
+            AND grade = #{grade,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 班级名称 -->
+        <if test="bjmc != null and bjmc != ''">
+            AND bj = #{bjmc,jdbcType=VARCHAR}
+        </if>
+
+        ORDER BY ksh
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- DM8物化视图统计查询 -->
+    <select id="countFromMaterializedView" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM mv_grade_summary
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmlx = #{kmlx,jdbcType=INTEGER}
+
+        <!-- 地市名称 -->
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考区名称 -->
+        <if test="kqmc != null and kqmc != ''">
+            AND kqmc = #{kqmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 学校名称 -->
+        <if test="xxmc != null and xxmc != ''">
+            AND xxmc = #{xxmc,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 考生号 -->
+        <if test="ksh != null and ksh != ''">
+            AND ksh = #{ksh,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 年级 -->
+        <if test="grade != null and grade != ''">
+            AND grade = #{grade,jdbcType=VARCHAR}
+        </if>
+
+        <!-- 班级名称 -->
+        <if test="bjmc != null and bjmc != ''">
+            AND bj = #{bjmc,jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <insert id="batchUpsertScores" parameterType="java.util.List">
+        MERGE INTO kscj TGT -- TGT是目标表(Target)的别名
+        USING (
+        -- 使用foreach构造一个虚拟的源数据表
+        <foreach collection="list" item="item" separator=" UNION ALL ">
+            SELECT
+            #{item.ksjhdm, jdbcType=VARCHAR} AS ksjhdm,
+            #{item.ksjhmc, jdbcType=VARCHAR} AS ksjhmc,
+            #{item.yjxh, jdbcType=VARCHAR} AS yjxh,
+            #{item.kmmc, jdbcType=VARCHAR} AS kmmc,
+            #{item.ksh, jdbcType=VARCHAR} AS ksh,
+            #{item.kklxmc, jdbcType=VARCHAR} AS kklxmc,
+            #{item.kmlx, jdbcType=TINYINT} AS kmlx,
+            #{item.fslkscj, jdbcType=TINYINT} AS fslkscj,
+            #{item.cjfx1, jdbcType=DECIMAL} AS cjfx1,
+            #{item.cjfx2, jdbcType=DECIMAL} AS cjfx2
+            FROM DUAL
+        </foreach>
+        ) SRC -- SRC是源数据表(Source)的别名
+        ON (TGT.ksjhdm = SRC.ksjhdm AND TGT.kmmc = SRC.kmmc AND TGT.ksh = SRC.ksh) -- 这是匹配条件
+
+        -- 如果匹配成功 (记录已存在)，则执行更新
+        WHEN MATCHED THEN
+        UPDATE SET
+        TGT.ksjhmc = SRC.ksjhmc,
+        TGT.yjxh = SRC.yjxh,
+        TGT.kklxmc = SRC.kklxmc,
+        TGT.kmlx = SRC.kmlx,
+        TGT.fslkscj = SRC.fslkscj,
+        TGT.cjfx1 = SRC.cjfx1,
+        TGT.cjfx2 = SRC.cjfx2,
+        TGT.gxsj = NOW() -- 假设gxsj是更新时间字段
+
+        -- 如果匹配失败 (记录不存在)，则执行插入
+        WHEN NOT MATCHED THEN
+        INSERT (ksjhdm, ksjhmc, yjxh, kmmc, ksh, kklxmc, kmlx, fslkscj, cjfx1, cjfx2)
+        VALUES (SRC.ksjhdm, SRC.ksjhmc, SRC.yjxh, SRC.kmmc, SRC.ksh, SRC.kklxmc, SRC.kmlx, SRC.fslkscj, SRC.cjfx1,
+        SRC.cjfx2);
+    </insert>
+
+</mapper>

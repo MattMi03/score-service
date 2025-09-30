@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.BytjMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.BytjEntity">
+        <id column="BYTJBS" property="bytjbs" jdbcType="BIGINT"/>
+        <result column="SZSMC" property="szsmc" jdbcType="VARCHAR"/>
+        <result column="KSKM" property="kskm" jdbcType="TINYINT"/>
+        <result column="KCKM" property="kckm" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <!-- 基础字段列表 -->
+    <sql id="Base_Column_List">
+        BYTJBS, SZSMC, KSKM, KCKM
+    </sql>
+
+    <!-- 查询所有毕业条件设置 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM bytj
+        ORDER BY BYTJBS
+    </select>
+
+    <!-- 根据ID查询毕业条件设置 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM bytj
+        WHERE BYTJBS = #{bytjbs,jdbcType=BIGINT}
+    </select>
+
+    <!-- 新增毕业条件设置 -->
+    <insert id="insert" parameterType="edu.qhjy.score_service.domain.entity.BytjEntity" useGeneratedKeys="true"
+            keyProperty="bytjbs">
+        INSERT INTO bytj (SZSMC, KSKM, KCKM)
+        VALUES (#{szsmc,jdbcType=VARCHAR}, #{kskm,jdbcType=TINYINT}, #{kckm,jdbcType=TINYINT})
+    </insert>
+
+    <!-- 更新毕业条件设置 -->
+    <update id="updateById" parameterType="edu.qhjy.score_service.domain.entity.BytjEntity">
+        UPDATE bytj
+        SET SZSMC = #{szsmc,jdbcType=VARCHAR},
+            KSKM  = #{kskm,jdbcType=TINYINT},
+            KCKM  = #{kckm,jdbcType=TINYINT}
+        WHERE BYTJBS = #{bytjbs,jdbcType=BIGINT}
+    </update>
+
+    <!-- 删除毕业条件设置 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE
+        FROM bytj
+        WHERE BYTJBS = #{bytjbs,jdbcType=BIGINT}
+    </delete>
+
+</mapper>

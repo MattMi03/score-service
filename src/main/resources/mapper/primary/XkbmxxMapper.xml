@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.XkbmxxMapper">
+
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.XkbmxxEntity">
+        <id column="XKBMBS" property="xkbmbs" jdbcType="BIGINT"/>
+        <result column="KSJHDM" property="ksjhdm" jdbcType="VARCHAR"/>
+        <result column="KSH" property="ksh" jdbcType="VARCHAR"/>
+        <result column="BMFJM" property="bmfjm" jdbcType="TINYINT"/>
+        <result column="BMBDZ" property="bmbdz" jdbcType="VARCHAR"/>
+        <result column="ZFZT" property="zfzt" jdbcType="VARCHAR"/>
+        <result column="JFSJ" property="jfsj" jdbcType="TIMESTAMP"/>
+        <result column="CJRXM" property="cjrxm" jdbcType="VARCHAR"/>
+        <result column="CJRGZRYM" property="cjrgzrym" jdbcType="VARCHAR"/>
+        <result column="CJSJ" property="cjsj" jdbcType="TIMESTAMP"/>
+        <result column="GXRXM" property="gxrxm" jdbcType="VARCHAR"/>
+        <result column="GXRGZRYM" property="gxrgzrym" jdbcType="VARCHAR"/>
+        <result column="GXSJ" property="gxsj" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        XKBMBS, KSJHDM, KSH, BMFJM, BMBDZ, ZFZT, JFSJ,
+        CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ
+    </sql>
+
+    <select id="selectByKsh" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM XKBMXX
+        WHERE KSH = #{ksh}
+    </select>
+
+    <select id="selectByKsjhdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM XKBMXX
+        WHERE KSJHDM = #{ksjhdm}
+    </select>
+
+    <select id="selectPaidByKsjhdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM XKBMXX
+        WHERE KSJHDM = #{ksjhdm} AND ZFZT = '已支付'
+    </select>
+
+    <!-- 新增：根据考试计划和科目名称联表查询报名信息 -->
+    <select id="selectByKsjhdmAndKmmc" resultMap="BaseResultMap">
+        SELECT x.XKBMBS,
+               x.KSJHDM,
+               x.KSH,
+               x.BMFJM,
+               x.BMBDZ,
+               x.YKQBS,
+               x.XKQBS,
+               x.ZFZT,
+               x.JFSJ,
+               x.CJRXM,
+               x.CJRGZRYM,
+               x.CJSJ,
+               x.GXRXM,
+               x.GXRGZRYM,
+               x.GXSJ
+        FROM XKBMXX x
+                 INNER JOIN XKBMKM k ON x.XKBMBS = k.XKBMBS
+        WHERE x.KSJHDM = #{ksjhdm}
+          AND k.KMMC = #{kmmc}
+    </select>
+
+    <!-- 新增：根据考试计划和科目名称查询已缴费的报名信息 -->
+    <select id="selectPaidByKsjhdmAndKmmc" resultMap="BaseResultMap">
+        SELECT x.XKBMBS,
+               x.KSJHDM,
+               x.KSH,
+               x.BMFJM,
+               x.BMBDZ,
+               x.YKQBS,
+               x.XKQBS,
+               x.ZFZT,
+               x.JFSJ,
+               x.CJRXM,
+               x.CJRGZRYM,
+               x.CJSJ,
+               x.GXRXM,
+               x.GXRGZRYM,
+               x.GXSJ
+        FROM XKBMXX x
+                 INNER JOIN XKBMKM k ON x.XKBMBS = k.XKBMBS
+        WHERE x.KSJHDM = #{ksjhdm}
+          AND k.KMMC = #{kmmc}
+          AND x.ZFZT = '已支付'
+    </select>
+
+</mapper>

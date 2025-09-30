@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.KskmxxMapper">
+
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.KskmxxEntity">
+        <id column="KSJHDM" property="ksjhdm" jdbcType="VARCHAR"/>
+        <id column="KMDM" property="kmdm" jdbcType="VARCHAR"/>
+        <result column="KSJHMC" property="ksjhmc" jdbcType="VARCHAR"/>
+        <result column="KMMC" property="kmmc" jdbcType="VARCHAR"/>
+        <result column="KMLX" property="kmlx" jdbcType="TINYINT"/>
+        <result column="KSRQ" property="ksrq" jdbcType="DATE"/>
+        <result column="KSKSSJ" property="kskssj" jdbcType="TIME"/>
+        <result column="KSJSSJ" property="ksjssj" jdbcType="TIME"/>
+        <result column="BMF" property="bmf" jdbcType="DECIMAL"/>
+        <result column="KCLX" property="kclx" jdbcType="TINYINT"/>
+        <result column="JB" property="jb" jdbcType="INTEGER"/>
+        <result column="CJRXM" property="cjrxm" jdbcType="VARCHAR"/>
+        <result column="CJRGZRYM" property="cjrgzrym" jdbcType="VARCHAR"/>
+        <result column="CJSJ" property="cjsj" jdbcType="TIMESTAMP"/>
+        <result column="GXRXM" property="gxrxm" jdbcType="VARCHAR"/>
+        <result column="GXRGZRYM" property="gxrgzrym" jdbcType="VARCHAR"/>
+        <result column="GXSJ" property="gxsj" jdbcType="TIMESTAMP"/>
+        <result column="SHZT" property="shzt" jdbcType="VARCHAR"/>
+        <result column="SHSJ" property="shsj" jdbcType="TIMESTAMP"/>
+        <result column="SHRXM" property="shrxm" jdbcType="VARCHAR"/>
+        <result column="SHYJ" property="shyj" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        KSJHDM, KMDM, KSJHMC, KMMC, KMLX, KSRQ, KSKSSJ, KSJSSJ, BMF, KCLX, JB, 
+        CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ, SHZT, SHSJ, SHRXM, SHYJ
+    </sql>
+
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSKMXX
+        ORDER BY KSJHDM, KMDM
+    </select>
+
+    <select id="selectByKsjhdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSKMXX
+        WHERE KSJHDM = #{ksjhdm}
+        ORDER BY KMDM
+    </select>
+
+    <select id="selectByKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSKMXX
+        WHERE KMMC = #{kmmc}
+    </select>
+
+    <select id="selectByKsjhdmAndKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSKMXX
+        WHERE KSJHDM = #{ksjhdm}
+        AND KMMC = #{kmmc}
+    </select>
+
+    <select id="selectByKmdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSKMXX
+        WHERE KMDM = #{kmdm}
+    </select>
+
+    <select id="selectByKsjhdmAndKmdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSKMXX
+        WHERE KSJHDM = #{ksjhdm} AND KMDM = #{kmdm}
+    </select>
+
+    <insert id="insert" parameterType="edu.qhjy.score_service.domain.entity.KskmxxEntity">
+        INSERT INTO KSKMXX (KSJHDM, KMDM, KSJHMC, KMMC, KMLX, KSRQ, KSKSSJ, KSJSSJ, BMF, KCLX, JB,
+                            CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ, SHZT, SHSJ, SHRXM, SHYJ)
+        VALUES (#{ksjhdm}, #{kmdm}, #{ksjhmc}, #{kmmc}, #{kmlx}, #{ksrq}, #{kskssj}, #{ksjssj}, #{bmf}, #{kclx}, #{jb},
+                #{cjrxm}, #{cjrgzrym}, #{cjsj}, #{gxrxm}, #{gxrgzrym}, #{gxsj}, #{shzt}, #{shsj}, #{shrxm}, #{shyj})
+    </insert>
+
+    <update id="updateByKsjhdmAndKmdm" parameterType="edu.qhjy.score_service.domain.entity.KskmxxEntity">
+        UPDATE KSKMXX
+        SET KSJHMC   = #{ksjhmc},
+            KMMC     = #{kmmc},
+            KMLX     = #{kmlx},
+            KSRQ     = #{ksrq},
+            KSKSSJ   = #{kskssj},
+            KSJSSJ   = #{ksjssj},
+            BMF      = #{bmf},
+            KCLX     = #{kclx},
+            JB       = #{jb},
+            GXRXM    = #{gxrxm},
+            GXRGZRYM = #{gxrgzrym},
+            GXSJ     = #{gxsj},
+            SHZT     = #{shzt},
+            SHSJ     = #{shsj},
+            SHRXM    = #{shrxm},
+            SHYJ     = #{shyj}
+        WHERE KSJHDM = #{ksjhdm}
+          AND KMDM = #{kmdm}
+    </update>
+
+    <delete id="deleteByKsjhdmAndKmdm">
+        DELETE
+        FROM KSKMXX
+        WHERE KSJHDM = #{ksjhdm}
+          AND KMDM = #{kmdm}
+    </delete>
+
+    <delete id="deleteByKsjhdm">
+        DELETE
+        FROM KSKMXX
+        WHERE KSJHDM = #{ksjhdm}
+    </delete>
+
+    <!-- 根据考试计划代码和科目类型查询科目名称列表 -->
+    <select id="selectKmmcByKsjhdmAndKmlx" resultType="java.lang.String">
+        SELECT KMMC
+        FROM KSKMXX
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+          AND KMLX = #{kmlx,jdbcType=INTEGER}
+        ORDER BY KMMC
+    </select>
+
+    <!-- 根据考试计划代码查询所有科目类型的科目名称列表（kmlx=0和kmlx=1） -->
+    <select id="selectKmmcByKsjhdmAllTypes" resultType="java.lang.String">
+        SELECT KMMC
+        FROM KSKMXX
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+          AND KMLX IN (0, 1)
+        ORDER BY KMMC
+    </select>
+
+</mapper>

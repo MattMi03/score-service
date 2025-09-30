@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.WcxxMapper">
+
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.WcxxEntity">
+        <id column="wcbs" property="wcbs" jdbcType="BIGINT"/>
+        <result column="ksjhdm" property="ksjhdm" jdbcType="VARCHAR"/>
+        <result column="ksjhmc" property="ksjhmc" jdbcType="VARCHAR"/>
+        <result column="kmmc" property="kmmc" jdbcType="VARCHAR"/>
+        <result column="szsxh" property="szsxh" jdbcType="TINYINT"/>
+        <result column="szsmc" property="szsmc" jdbcType="VARCHAR"/>
+        <result column="djm" property="djm" jdbcType="VARCHAR"/>
+        <result column="fslkscj" property="fslkscj" jdbcType="TINYINT"/>
+        <result column="bfb" property="bfb" jdbcType="TINYINT"/>
+        <result column="bfdrs" property="bfdrs" jdbcType="INTEGER"/>
+        <result column="ljbfb" property="ljbfb" jdbcType="DECIMAL"/>
+        <result column="ljrs" property="ljrs" jdbcType="INTEGER"/>
+        <result column="djzdf" property="djzdf" jdbcType="DECIMAL"/>
+        <result column="cjrxm" property="cjrxm" jdbcType="VARCHAR"/>
+        <result column="cjrgzrym" property="cjrgzrym" jdbcType="VARCHAR"/>
+        <result column="cjsj" property="cjsj" jdbcType="TIMESTAMP"/>
+        <result column="gxrxm" property="gxrxm" jdbcType="VARCHAR"/>
+        <result column="gxrgzrym" property="gxrgzrym" jdbcType="VARCHAR"/>
+        <result column="gxsj" property="gxsj" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        wcbs, ksjhdm, ksjhmc, kmmc, szsxh, szsmc, djm, fslkscj, bfb, bfdrs, ljbfb, ljrs, djzdf, cjrxm, cjrgzrym, cjsj, gxrxm, gxrgzrym, gxsj
+    </sql>
+
+    <!-- 插入单条记录 -->
+    <insert id="insert" parameterType="edu.qhjy.score_service.domain.entity.WcxxEntity" useGeneratedKeys="true"
+            keyProperty="wcbs">
+        INSERT INTO WCXX (ksjhdm, ksjhmc, kmmc, szsxh, szsmc, djm, fslkscj, bfb, bfdrs, ljbfb, ljrs, djzdf, cjrxm,
+                          cjrgzrym, cjsj, gxrxm, gxrgzrym, gxsj)
+        VALUES (#{ksjhdm,jdbcType=VARCHAR}, #{ksjhmc,jdbcType=VARCHAR}, #{kmmc,jdbcType=VARCHAR},
+                #{szsxh,jdbcType=TINYINT}, #{szsmc,jdbcType=VARCHAR},
+                #{djm,jdbcType=VARCHAR}, #{fslkscj,jdbcType=TINYINT}, #{bfb,jdbcType=TINYINT},
+                #{bfdrs,jdbcType=INTEGER}, #{ljbfb,jdbcType=DECIMAL}, #{ljrs,jdbcType=INTEGER},
+                #{djzdf,jdbcType=DECIMAL},
+                #{cjrxm,jdbcType=VARCHAR}, #{cjrgzrym,jdbcType=VARCHAR}, #{cjsj,jdbcType=TIMESTAMP},
+                #{gxrxm,jdbcType=VARCHAR}, #{gxrgzrym,jdbcType=VARCHAR}, #{gxsj,jdbcType=TIMESTAMP})
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="wcbs">
+        INSERT INTO WCXX (ksjhdm, ksjhmc, kmmc, szsxh, szsmc, djm, fslkscj, bfb, bfdrs, ljbfb, ljrs, djzdf, cjrxm,
+        cjrgzrym, cjsj, gxrxm, gxrgzrym, gxsj)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.ksjhdm,jdbcType=VARCHAR}, #{item.ksjhmc,jdbcType=VARCHAR}, #{item.kmmc,jdbcType=VARCHAR},
+            #{item.szsxh,jdbcType=TINYINT}, #{item.szsmc,jdbcType=VARCHAR},
+            #{item.djm,jdbcType=VARCHAR}, #{item.fslkscj,jdbcType=TINYINT}, #{item.bfb,jdbcType=TINYINT},
+            #{item.bfdrs,jdbcType=INTEGER}, #{item.ljbfb,jdbcType=DECIMAL}, #{item.ljrs,jdbcType=INTEGER},
+            #{item.djzdf,jdbcType=DECIMAL},
+            #{item.cjrxm,jdbcType=VARCHAR}, #{item.cjrgzrym,jdbcType=VARCHAR}, #{item.cjsj,jdbcType=TIMESTAMP},
+            #{item.gxrxm,jdbcType=VARCHAR}, #{item.gxrgzrym,jdbcType=VARCHAR}, #{item.gxsj,jdbcType=TIMESTAMP})
+        </foreach>
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT wcbs,
+               ksjhdm,
+               ksjhmc,
+               kmmc,
+               CASE
+                   WHEN szsmc = '玉树州' THEN 1
+                   WHEN szsmc = '果洛州' THEN 2
+                   WHEN szsmc = '黄南州' THEN 3
+                   WHEN szsmc = '海南州' THEN 4
+                   WHEN szsmc = '海西州' THEN 5
+                   WHEN szsmc = '海北州' THEN 6
+                   WHEN szsmc = '石油局' THEN 7
+                   WHEN szsmc = '西宁市' THEN 8
+                   WHEN szsmc = '海东市' THEN 9
+                   WHEN szsmc = '省直' THEN 10
+                   ELSE 0
+                   END as szsxh,
+               szsmc,
+               djm,
+               fslkscj,
+               bfb,
+               bfdrs,
+               ljbfb,
+               ljrs,
+               djzdf,
+               cjrxm,
+               cjrgzrym,
+               cjsj,
+               gxrxm,
+               gxrgzrym,
+               gxsj
+        FROM WCXX
+        WHERE wcbs = #{wcbs,jdbcType=BIGINT}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT
+        wcbs, ksjhdm, ksjhmc, kmmc,
+        CASE
+        WHEN szsmc = '玉树州' THEN 1
+        WHEN szsmc = '果洛州' THEN 2
+        WHEN szsmc = '黄南州' THEN 3
+        WHEN szsmc = '海南州' THEN 4
+        WHEN szsmc = '海西州' THEN 5
+        WHEN szsmc = '海北州' THEN 6
+        WHEN szsmc = '石油局' THEN 7
+        WHEN szsmc = '西宁市' THEN 8
+        WHEN szsmc = '海东市' THEN 9
+        WHEN szsmc = '省直' THEN 10
+        ELSE 0
+        END as szsxh,
+        szsmc, djm, fslkscj, bfb, bfdrs, ljbfb, ljrs, djzdf, cjrxm, cjrgzrym, cjsj, gxrxm, gxrgzrym, gxsj
+        FROM WCXX
+        <where>
+            <if test="ksjhdm != null and ksjhdm != ''">
+                AND ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+            </if>
+            <if test="kmmc != null and kmmc != ''">
+                AND kmmc = #{kmmc,jdbcType=VARCHAR}
+            </if>
+            <if test="szsmc != null and szsmc != ''">
+                AND szsmc = #{szsmc,jdbcType=VARCHAR}
+            </if>
+            <if test="djm != null and djm != ''">
+                AND djm = #{djm,jdbcType=VARCHAR}
+            </if>
+        </where>
+        ORDER BY ksjhdm DESC, kmmc, szsmc, djm
+    </select>
+
+    <!-- 条件删除（只删除等级赋分记录，不删除一分一段数据） -->
+    <delete id="deleteByCondition">
+        DELETE FROM WCXX
+        <where>
+            <if test="ksjhdm != null and ksjhdm != ''">
+                AND ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+            </if>
+            <if test="kmmc != null and kmmc != ''">
+                AND kmmc = #{kmmc,jdbcType=VARCHAR}
+            </if>
+            <if test="szsmc != null and szsmc != ''">
+                AND szsmc = #{szsmc,jdbcType=VARCHAR}
+            </if>
+            AND djzdf = 0
+        </where>
+    </delete>
+
+    <!-- 根据ID更新 -->
+    <update id="updateById" parameterType="edu.qhjy.score_service.domain.entity.WcxxEntity">
+        UPDATE WCXX
+        <set>
+            <if test="ksjhdm != null">ksjhdm = #{ksjhdm,jdbcType=VARCHAR},</if>
+            <if test="ksjhmc != null">ksjhmc = #{ksjhmc,jdbcType=VARCHAR},</if>
+            <if test="kmmc != null">kmmc = #{kmmc,jdbcType=VARCHAR},</if>
+            <if test="szsxh != null">szsxh = #{szsxh,jdbcType=TINYINT},</if>
+            <if test="szsmc != null">szsmc = #{szsmc,jdbcType=VARCHAR},</if>
+            <if test="djm != null">djm = #{djm,jdbcType=VARCHAR},</if>
+            <if test="fslkscj != null">fslkscj = #{fslkscj,jdbcType=TINYINT},</if>
+            <if test="bfb != null">bfb = #{bfb,jdbcType=TINYINT},</if>
+            <if test="bfdrs != null">bfdrs = #{bfdrs,jdbcType=INTEGER},</if>
+            <if test="cjrxm != null">cjrxm = #{cjrxm,jdbcType=VARCHAR},</if>
+            <if test="cjrgzrym != null">cjrgzrym = #{cjrgzrym,jdbcType=VARCHAR},</if>
+            <if test="cjsj != null">cjsj = #{cjsj,jdbcType=TIMESTAMP},</if>
+            <if test="gxrxm != null">gxrxm = #{gxrxm,jdbcType=VARCHAR},</if>
+            <if test="gxrgzrym != null">gxrgzrym = #{gxrgzrym,jdbcType=VARCHAR},</if>
+            <if test="gxsj != null">gxsj = #{gxsj,jdbcType=TIMESTAMP},</if>
+        </set>
+        WHERE wcbs = #{wcbs,jdbcType=BIGINT}
+    </update>
+
+    <!-- 查询统计信息 -->
+    <select id="selectStatistics" resultType="java.util.Map">
+        SELECT
+        ksjhdm,
+        kmmc,
+        szsmc,
+        COUNT(*) as gradeCount,
+        SUM(bfdrs) as totalStudents,
+        MIN(fslkscj) as minThreshold,
+        MAX(fslkscj) as maxThreshold
+        FROM WCXX
+        <where>
+            <if test="ksjhdm != null and ksjhdm != ''">
+                AND ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+            </if>
+            <if test="kmmc != null and kmmc != ''">
+                AND kmmc = #{kmmc,jdbcType=VARCHAR}
+            </if>
+            <if test="szsmc != null and szsmc != ''">
+                AND szsmc = #{szsmc,jdbcType=VARCHAR}
+            </if>
+        </where>
+        GROUP BY ksjhdm, kmmc, szsmc
+        ORDER BY ksjhdm DESC, kmmc, szsmc
+    </select>
+
+    <!-- 查询等级阈值信息（用于等级赋分验证） -->
+    <select id="selectGradeThresholds" resultType="java.util.Map">
+        SELECT
+        djm as grade,
+        fslkscj as threshold,
+        bfb as percentage,
+        bfdrs as studentCount
+        FROM WCXX
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        ORDER BY djm
+    </select>
+
+    <!-- 检查是否已存在等级赋分记录 -->
+    <select id="existsGradeAssignment" resultType="java.lang.Boolean">
+        SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+        FROM WCXX
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        AND djzdf = 0
+    </select>
+
+    <!-- 获取等级分布数据 -->
+    <select id="getGradeDistribution" resultType="java.util.Map">
+        SELECT
+        djm,
+        fslkscj as fsx,
+        ljbfb as bl,
+        bfdrs as rs,
+        ljrs as ljrs
+        FROM WCXX
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND djzdf = 0
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        ORDER BY djm
+    </select>
+
+    <!-- 更新等级分界线 -->
+    <update id="updateGradeThresholds">
+        UPDATE WCXX
+        SET fslkscj = CASE
+        <foreach collection="gradeThresholds" index="grade" item="threshold">
+            WHEN djm = #{grade,jdbcType=VARCHAR} THEN #{threshold,jdbcType=TINYINT}
+        </foreach>
+        ELSE fslkscj
+        END,
+        gxsj = NOW(),
+        gxrxm = #{operatorName,jdbcType=VARCHAR},
+        gxrgzrym = #{operatorCode,jdbcType=VARCHAR}
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND djzdf = 0
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        AND djm IN
+        <foreach collection="gradeThresholds" index="grade" item="threshold" open="(" close=")" separator=",">
+            #{grade,jdbcType=VARCHAR}
+        </foreach>
+    </update>
+
+    <!-- 查询一分一段数据 -->
+    <select id="selectScoreSegmentData" resultMap="BaseResultMap">
+        SELECT
+        wcbs, ksjhdm, ksjhmc, kmmc,
+        CASE
+        WHEN szsmc = '玉树州' THEN 1
+        WHEN szsmc = '果洛州' THEN 2
+        WHEN szsmc = '黄南州' THEN 3
+        WHEN szsmc = '海南州' THEN 4
+        WHEN szsmc = '海西州' THEN 5
+        WHEN szsmc = '海北州' THEN 6
+        WHEN szsmc = '石油局' THEN 7
+        WHEN szsmc = '西宁市' THEN 8
+        WHEN szsmc = '海东市' THEN 9
+        WHEN szsmc = '省直' THEN 10
+        ELSE 0
+        END as szsxh,
+        szsmc, djm, fslkscj, bfb, bfdrs, ljbfb, ljrs, djzdf, cjrxm, cjrgzrym, cjsj, gxrxm, gxrgzrym, gxsj
+        FROM WCXX
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND djzdf = 1
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        ORDER BY fslkscj DESC
+    </select>
+
+    <!-- 批量插入一分一段数据 -->
+    <insert id="batchInsertScoreSegments" parameterType="java.util.List">
+        INSERT INTO WCXX (
+        ksjhdm, ksjhmc, kmmc, szsxh, szsmc, djm, fslkscj, bfb, bfdrs, ljbfb, ljrs, djzdf,
+        cjrxm, cjrgzrym, cjsj
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.ksjhdm,jdbcType=VARCHAR}, #{item.ksjhmc,jdbcType=VARCHAR}, #{item.kmmc,jdbcType=VARCHAR},
+            #{item.szsxh,jdbcType=TINYINT}, #{item.szsmc,jdbcType=VARCHAR}, #{item.djm,jdbcType=VARCHAR},
+            #{item.fslkscj,jdbcType=TINYINT},
+            #{item.bfb,jdbcType=TINYINT}, #{item.bfdrs,jdbcType=INTEGER}, #{item.ljbfb,jdbcType=DECIMAL},
+            #{item.ljrs,jdbcType=INTEGER}, 1,
+            #{item.cjrxm,jdbcType=VARCHAR}, #{item.cjrgzrym,jdbcType=VARCHAR}, NOW()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 删除一分一段数据 -->
+    <delete id="deleteScoreSegmentData">
+        DELETE FROM WCXX
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND djzdf = 1
+        <if test="kmmc != null and kmmc != ''">
+            AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        </if>
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+    </delete>
+
+    <!-- 查询等级赋分统计信息（从WCXX表） -->
+    <select id="selectGradeAssignmentStats" resultType="java.util.Map">
+        SELECT
+        djm as grade,
+        bfdrs as count,
+        ROUND(ljbfb, 1) as percentage,
+        fslkscj as minScore,
+        szsmc,
+        szsxh
+        FROM WCXX
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND djzdf = 0
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        ORDER BY djm
+    </select>
+
+    <!-- 更新等级统计数据（DJZDF=0的记录） -->
+    <update id="updateGradeStatistics">
+        UPDATE WCXX
+        SET fslkscj = #{threshold,jdbcType=TINYINT},
+        bfb = #{percentage,jdbcType=INTEGER},
+        bfdrs = #{count,jdbcType=INTEGER},
+        ljbfb = #{cumulativePercentage,jdbcType=DECIMAL},
+        ljrs = #{cumulativeCount,jdbcType=INTEGER},
+        gxsj = NOW(),
+        gxrxm = #{operatorName,jdbcType=VARCHAR},
+        gxrgzrym = #{operatorCode,jdbcType=VARCHAR}
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+        AND kmmc = #{kmmc,jdbcType=VARCHAR}
+        AND djzdf = 0
+        AND djm = #{grade,jdbcType=VARCHAR}
+        <if test="szsmc != null and szsmc != ''">
+            AND szsmc = #{szsmc,jdbcType=VARCHAR}
+        </if>
+    </update>
+
+    <!-- 更新WCXX表中一分一段数据的DJM字段 -->
+    <update id="updateScoreSegmentGrades">
+        UPDATE WCXX
+        SET DJM   = CASE
+                        WHEN FSLKSCJ >= #{gradeAThreshold} THEN 'A'
+                        WHEN FSLKSCJ >= #{gradeBThreshold} THEN 'B'
+                        WHEN FSLKSCJ >= #{gradeCThreshold} THEN 'C'
+                        WHEN FSLKSCJ >= #{gradeDThreshold} THEN 'D'
+                        ELSE 'E'
+            END,
+            GXSJ  = NOW(),
+            GXRXM = 'SYSTEM'
+        WHERE KSJHDM = #{ksjhdm}
+          AND KMMC = #{kmmc}
+          AND SZSMC = #{szsmc}
+          AND DJZDF = 1
+    </update>
+
+    <!-- 获取等级分界线 -->
+    <select id="getGradeThresholds" resultType="java.util.Map">
+        SELECT djm     as "key",
+               fslkscj as "value"
+        FROM WCXX
+        WHERE ksjhdm = #{ksjhdm,jdbcType=VARCHAR}
+          AND kmmc = #{kmmc,jdbcType=VARCHAR}
+          AND szsmc = #{szsmc,jdbcType=VARCHAR}
+          AND djzdf = 0
+          AND djm IN ('A', 'B', 'C', 'D')
+        ORDER BY djm
+    </select>
+
+</mapper>

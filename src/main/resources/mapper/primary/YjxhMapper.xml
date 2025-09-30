@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.YjxhMapper">
+
+    <!-- 启用二级缓存 -->
+    <cache eviction="LRU" flushInterval="300000" size="1000" readOnly="true"/>
+
+    <!-- 通用结果映射 -->
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.YjxhEntity">
+        <result column="YJXH" property="yjxh" jdbcType="VARCHAR"/>
+        <result column="KSJHDM" property="ksjhdm" jdbcType="VARCHAR"/>
+        <result column="KSJHMC" property="ksjhmc" jdbcType="VARCHAR"/>
+        <result column="KMMC" property="kmmc" jdbcType="VARCHAR"/>
+        <result column="KMLX" property="kmlx" jdbcType="TINYINT"/>
+        <result column="KSH" property="ksh" jdbcType="VARCHAR"/>
+        <result column="KSXM" property="ksxm" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        YJXH, KSJHDM, KSJHMC, KMMC, KMLX, KSH, KSXM
+    </sql>
+
+    <!-- 根据阅卷序号和考试计划代码查询考生信息 -->
+    <select id="selectByYjxhAndKsjhdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yjxh
+        WHERE YJXH = #{yjxh,jdbcType=VARCHAR}
+        AND KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 批量查询阅卷序号对应的考生信息 -->
+    <select id="selectBatchByYjxhAndKsjhdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yjxh
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        AND YJXH IN
+        <foreach collection="yjxhList" item="yjxh" open="(" separator="," close=")">
+            #{yjxh,jdbcType=VARCHAR}
+        </foreach>
+    </select>
+
+    <!-- 根据考试计划代码查询所有阅卷序号信息 -->
+    <select id="selectByKsjhdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yjxh
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        ORDER BY YJXH
+    </select>
+
+    <!-- 根据考试计划代码和科目名称查询阅卷序号信息 -->
+    <select id="selectByKsjhdmAndKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yjxh
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        AND KMMC = #{kmmc,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 根据阅卷序号列表、考试计划代码和科目名称查询阅卷序号信息（分批查询优化） -->
+    <select id="selectByYjxhList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yjxh
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        AND KMMC = #{kmmc,jdbcType=VARCHAR}
+        AND YJXH IN
+        <foreach collection="yjxhList" item="yjxh" open="(" separator="," close=")">
+            #{yjxh,jdbcType=VARCHAR}
+        </foreach>
+    </select>
+
+    <!-- 验证阅卷序号、考试计划代码和考生姓名的匹配关系 -->
+    <select id="validateYjxhKsxmMatch" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yjxh
+        WHERE YJXH = #{yjxh,jdbcType=VARCHAR}
+        AND KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        AND KSXM = #{ksxm,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 查询考试计划科目统计信息 -->
+    <select id="selectExamPlanSubjectStatistics" resultType="java.util.Map">
+        SELECT
+        y.KSJHDM as ksjhdm,
+        y.KSJHMC as ksjhmc,
+        y.KMMC as kmmc,
+        COUNT(DISTINCT y.KSH) as student_count
+        FROM yjxh y
+        <if test="ksjhdm != null and ksjhdm != ''">
+            WHERE y.KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        </if>
+        GROUP BY y.KSJHDM, y.KSJHMC, y.KMMC
+        ORDER BY y.KSJHDM DESC, y.KMMC
+    </select>
+
+    <!-- 根据考试计划代码、考生号和科目名称查询阅卷序号 -->
+    <select id="selectByKsjhdmAndKshAndKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM yjxh
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        AND KSH = #{ksh,jdbcType=VARCHAR}
+        AND KMMC = #{kmmc,jdbcType=VARCHAR}
+        LIMIT 1
+    </select>
+
+    <!-- 根据考试计划代码查询考试计划名称 -->
+    <select id="selectKsjhmcByKsjhdm" resultType="java.lang.String">
+        SELECT DISTINCT KSJHMC
+        FROM yjxh
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        LIMIT 1
+    </select>
+
+</mapper>

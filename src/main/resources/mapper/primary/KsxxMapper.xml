@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.KsxxMapper">
+
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.KsxxEntity">
+        <id column="KSH" property="ksh" jdbcType="VARCHAR"/>
+        <result column="XJH" property="xjh" jdbcType="VARCHAR"/>
+        <result column="XM" property="xm" jdbcType="VARCHAR"/>
+        <result column="XB" property="xb" jdbcType="VARCHAR"/>
+        <result column="MZ" property="mz" jdbcType="VARCHAR"/>
+        <result column="CSRQ" property="csrq" jdbcType="DATE"/>
+        <result column="SCSBLHDQMC" property="scsblhdqmc" jdbcType="VARCHAR"/>
+        <result column="SCSBLHDSMC" property="scsblhdsmc" jdbcType="VARCHAR"/>
+        <result column="SCSBLHDXMC" property="scsblhdxmc" jdbcType="VARCHAR"/>
+        <result column="SFZJLXMC" property="sfzjlxmc" jdbcType="VARCHAR"/>
+        <result column="SFZJH" property="sfzjh" jdbcType="VARCHAR"/>
+        <result column="JTXXDZQMC" property="jtxxdzqmc" jdbcType="VARCHAR"/>
+        <result column="JTXXDZSMC" property="jtxxdzsmc" jdbcType="VARCHAR"/>
+        <result column="JTXXDZXMC" property="jtxxdzxmc" jdbcType="VARCHAR"/>
+        <result column="SZQMC" property="szqmc" jdbcType="VARCHAR"/>
+        <result column="SZSMC" property="szsmc" jdbcType="VARCHAR"/>
+        <result column="SZXMC" property="szxmc" jdbcType="VARCHAR"/>
+        <result column="KQMC" property="kqmc" jdbcType="VARCHAR"/>
+        <result column="YHJSZQMC" property="yhjszqmc" jdbcType="VARCHAR"/>
+        <result column="YHJSZSMC" property="yhjszsmc" jdbcType="VARCHAR"/>
+        <result column="YHJSZXMC" property="yhjszxmc" jdbcType="VARCHAR"/>
+        <result column="QRXZSJ" property="qrxzsj" jdbcType="VARCHAR"/>
+        <result column="QRYY" property="qryy" jdbcType="VARCHAR"/>
+        <result column="ZQZH" property="zqzh" jdbcType="VARCHAR"/>
+        <result column="QYZH" property="qyzh" jdbcType="VARCHAR"/>
+        <result column="ZPDZ" property="zpdz" jdbcType="VARCHAR"/>
+        <result column="ZZMM" property="zzmm" jdbcType="VARCHAR"/>
+        <result column="YDDH" property="yddh" jdbcType="VARCHAR"/>
+        <result column="YSYZ" property="ysyz" jdbcType="VARCHAR"/>
+        <result column="MZYYYSKYZ" property="mzyyyskyz" jdbcType="VARCHAR"/>
+        <result column="KSLX" property="kslx" jdbcType="VARCHAR"/>
+        <result column="KJZTMC" property="kjztmc" jdbcType="VARCHAR"/>
+        <result column="XXMC" property="xxmc" jdbcType="VARCHAR"/>
+        <result column="BJMC" property="bjmc" jdbcType="VARCHAR"/>
+        <result column="SHJD" property="shjd" jdbcType="VARCHAR"/>
+        <result column="SHZT" property="shzt" jdbcType="VARCHAR"/>
+        <result column="SHSJ" property="shsj" jdbcType="TIMESTAMP"/>
+        <result column="SHRXM" property="shrxm" jdbcType="VARCHAR"/>
+        <result column="SHYJ" property="shyj" jdbcType="VARCHAR"/>
+        <result column="CJRXM" property="cjrxm" jdbcType="VARCHAR"/>
+        <result column="CJRGZRYM" property="cjrgzrym" jdbcType="VARCHAR"/>
+        <result column="CJSJ" property="cjsj" jdbcType="TIMESTAMP"/>
+        <result column="GXRXM" property="gxrxm" jdbcType="VARCHAR"/>
+        <result column="GXRGZRYM" property="gxrgzrym" jdbcType="VARCHAR"/>
+        <result column="GXSJ" property="gxsj" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        KSH, XJH, XM, XB, MZ, CSRQ, SCSBLHDQMC, SCSBLHDSMC, SCSBLHDXMC,
+        SFZJLXMC, SFZJH, JTXXDZQMC, JTXXDZSMC, JTXXDZXMC, SZQMC, SZSMC, SZXMC, KQMC,
+        YHJSZQMC, YHJSZSMC, YHJSZXMC, QRXZSJ, QRYY, ZQZH, QYZH, ZPDZ, ZZMM,
+        YDDH, YSYZ, MZYYYSKYZ, KSLX, KJZTMC, XXMC, BJMC, SHJD, SHZT, SHSJ, SHRXM,
+        SHYJ, CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ
+    </sql>
+
+    <select id="selectByKsh" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSXX
+        WHERE KSH = #{ksh}
+    </select>
+
+    <select id="selectByKshList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSXX
+        WHERE KSH IN
+        <foreach collection="kshList" item="ksh" open="(" separator="," close=")">
+            #{ksh}
+        </foreach>
+    </select>
+
+    <select id="selectByXxmcAndBjmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSXX
+        WHERE XXMC = #{xxmc} AND BJMC = #{bjmc}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM KSXX
+    </select>
+
+    <!-- ==================== 省外转入考生查询相关SQL ==================== -->
+
+    <!-- 分页查询省外转入考生数据（支持级联查询） -->
+    <!-- 分页查询省外转入考生数据（支持级联查询） -->
+    <select id="selectOutOfProvinceStudentsWithPagination"
+            resultType="edu.qhjy.score_service.domain.vo.OutOfProvinceStudentVO">
+        SELECT
+        k.SHZT as shzt,
+        k.SHSJ as shsj,
+        k.SHRXM as shr,
+        k.XM as xm,
+        k.SFZJH as sfzjh,
+        k.SZSMC as ds,
+        kq.KQMC as kq,
+        k.XXMC as school,
+        k.CJRXM as cjr,
+        k.CJSJ as cjsj,
+        k.SHJD as shjd,
+        k.SHYJ as shyj,
+        k.KSH as ksh
+        FROM ksxx k
+        LEFT JOIN kqxx kq ON k.kqmc = kq.kqmc
+        WHERE k.KSH IN (
+        SELECT KSH
+        FROM kscj
+        WHERE KSJHDM = '0000'
+        )
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND k.SZSMC = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.KQMC = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND k.XXMC = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.ksh != null and query.ksh != ''">
+            AND k.KSH = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+        ORDER BY
+        <choose>
+            <when test="query.sortField != null and query.sortField != ''">
+                ${query.sortField}
+            </when>
+            <otherwise>
+                k.CJSJ
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="query.sortOrder != null and query.sortOrder.toUpperCase() == 'ASC'">
+                ASC
+            </when>
+            <otherwise>
+                DESC
+            </otherwise>
+        </choose>
+        LIMIT #{query.offset}, #{query.limit}
+    </select>
+    <!-- 统计省外转入考生数据总数（支持级联查询） -->
+    <select id="countOutOfProvinceStudents" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM ksxx k
+        LEFT JOIN kqxx kq ON k.kqmc = kq.kqmc
+        WHERE k.KSH IN (
+        SELECT KSH
+        FROM kscj
+        WHERE KSJHDM = '0000'
+        )
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND k.SZSMC = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND kq.KQMC = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND k.XXMC = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.ksh != null and query.ksh != ''">
+            AND k.KSH = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <!-- 根据考生号查询考生基本信息 -->
+    <select id="selectStudentInfoByKsh" resultType="edu.qhjy.score_service.domain.entity.KsxxEntity">
+        SELECT KSH   as ksh,
+               SFZJH as sfzjh,
+               XM    as xm
+        FROM ksxx
+        WHERE KSH = #{ksh,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 验证考生信息匹配性 -->
+    <select id="validateStudentInfo" resultType="edu.qhjy.score_service.domain.entity.KsxxEntity">
+        SELECT KSH   as ksh,
+               SFZJH as sfzjh,
+               XM    as xm,
+               KSLX  as kslx
+        FROM ksxx
+        WHERE KSH = #{ksh,jdbcType=VARCHAR}
+          AND SFZJH = #{sfzjh,jdbcType=VARCHAR}
+          AND XM = #{xm,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 查询各市州毕业生统计数据 -->
+    <select id="selectGraduationStatisticsByCity" resultType="java.util.Map">
+        SELECT SZSMC    as szsmc,
+               COUNT(*) as totalCount
+        FROM ksxx
+        WHERE BYND = #{bynd,jdbcType=INTEGER}
+          AND RXND = #{rxnd,jdbcType=INTEGER}
+        GROUP BY SZSMC
+        ORDER BY SZSMC
+    </select>
+
+    <!-- 根据毕业年度查询总人数 -->
+    <select id="selectTotalCountByBynd" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM ksxx
+        WHERE BYND = #{bynd,jdbcType=INTEGER}
+    </select>
+
+    <!-- 根据级别查询总人数 -->
+    <select id="selectTotalCountByRxnd" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM ksxx
+        WHERE RXND = #{rxnd,jdbcType=INTEGER}
+    </select>
+
+    <!-- 获取毕业生统计数据（合并查询优化版本） -->
+    <select id="selectGraduationStatisticsOptimized" resultType="java.util.Map">
+        SELECT city_stats.szsmc,
+               city_stats.totalCount,
+               total_stats.byndTotalCount,
+               total_stats.rxndTotalCount
+        FROM (SELECT SZSMC    as szsmc,
+                     COUNT(*) as totalCount
+              FROM ksxx
+              WHERE BYND = #{bynd,jdbcType=INTEGER}
+                AND RXND = #{rxnd,jdbcType=INTEGER}
+              GROUP BY SZSMC) city_stats
+                 CROSS JOIN (SELECT (SELECT COUNT(*)
+                                     FROM ksxx
+                                     WHERE BYND = #{bynd,jdbcType=INTEGER}) as byndTotalCount,
+                                    (SELECT COUNT(*)
+                                     FROM ksxx
+                                     WHERE RXND = #{rxnd,jdbcType=INTEGER}) as rxndTotalCount) total_stats
+        ORDER BY city_stats.szsmc
+    </select>
+
+</mapper>

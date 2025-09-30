@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.KqxxMapper">
+
+    <!-- 根据所属行政区划名称查询所属行政区划代码 -->
+    <select id="selectSsxzqhdmByName" resultType="java.lang.String">
+        SELECT SSXZQHDM
+        FROM kqxx
+        WHERE SSXZQHMC = #{ssxzqhmc,jdbcType=VARCHAR}
+        LIMIT 1
+    </select>
+
+    <!-- 根据考区名称查询考区代码 -->
+    <select id="selectKqdmByName" resultType="java.lang.String">
+        SELECT KQDM
+        FROM kqxx
+        WHERE KQMC = #{kqmc,jdbcType=VARCHAR}
+        LIMIT 1
+    </select>
+
+    <!-- 根据所属行政区划代码查询所属行政区划名称 -->
+    <select id="selectSsxzqhmcByCode" resultType="java.lang.String">
+        SELECT SSXZQHMC
+        FROM kqxx
+        WHERE SSXZQHDM = #{ssxzqhdm,jdbcType=VARCHAR}
+        LIMIT 1
+    </select>
+
+    <!-- 根据考区代码查询考区名称 -->
+    <select id="selectKqmcByCode" resultType="java.lang.String">
+        SELECT KQMC
+        FROM kqxx
+        WHERE KQDM = #{kqdm,jdbcType=VARCHAR}
+        LIMIT 1
+    </select>
+
+</mapper>

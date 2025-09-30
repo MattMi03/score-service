@@ -1,0 +1,131 @@
+# Spring Boot 应用通用配置
+spring:
+  application:
+    name: ${APP_NAME:score-service}
+  
+  # 环境配置 - 默认使用local环境
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,hikaricp
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      simple:
+        enabled: true
+  
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:300MB}
+      max-request-size: ${MAX_REQUEST_SIZE:300MB}
+
+# MyBatis通用配置
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: edu.qhjy.score_service_v2.domain.entity
+  configuration:
+    default-executor-type: BATCH # 启用批处理执行器
+    map-underscore-to-camel-case: true
+
+# 通用日志配置
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+# 通用业务配置模板
+# DBF导入配置
+dbf:
+  import:
+    # 批处理配置
+    batch-size: ${DBF_BATCH_SIZE:500}
+    # 线程池配置
+    thread-pool:
+      core-size: ${DBF_THREAD_CORE_SIZE:8}
+      max-size: ${DBF_THREAD_MAX_SIZE:16}
+      queue-capacity: ${DBF_THREAD_QUEUE_CAPACITY:200}
+      keep-alive-seconds: ${DBF_THREAD_KEEP_ALIVE:60}
+    # 文件解析超时配置
+    parse-timeout-seconds: ${DBF_PARSE_TIMEOUT:300}
+    # 数据库操作超时配置
+    db-timeout-seconds: ${DBF_DB_TIMEOUT:600}
+
+# 等级赋分配置
+grade:
+  assignment:
+    # 等级配置
+    grade-config:
+      # 等级列表
+      grades:
+        - "A"
+        - "B"
+        - "C"
+        - "D"
+        - "E"
+
+      # 等级比例配置
+      grade-ratios:
+        "A": ${GRADE_RATIO_A:0.15}   # 15%
+        "B": ${GRADE_RATIO_B:0.35}   # 35%
+        "C": ${GRADE_RATIO_C:0.35}   # 35%
+        "D": ${GRADE_RATIO_D:0.13}   # 13%
+        "E": ${GRADE_RATIO_E:0.02}   # 2%
+
+      # 最小参与人数
+      min-participants: ${GRADE_MIN_PARTICIPANTS:1000}
+
+      # 是否启用同分处理
+      enable-same-score-handling: ${GRADE_ENABLE_SAME_SCORE:true}
+
+    # Redis配置
+    redis-config:
+      # 分布式锁超时时间（秒）
+      lock-timeout: ${GRADE_REDIS_LOCK_TIMEOUT:300}
+
+      # 进度缓存过期时间（秒）
+      progress-expiration: ${GRADE_REDIS_PROGRESS_EXPIRATION:7200}
+
+      # 计算结果缓存过期时间（秒）
+      calculation-cache-expiration: ${GRADE_REDIS_CALC_CACHE_EXPIRATION:3600}
+
+      # 任务队列过期时间（秒）
+      task-queue-expiration: ${GRADE_REDIS_TASK_QUEUE_EXPIRATION:86400}
+
+      # Redis键前缀
+      key-prefix: ${GRADE_REDIS_KEY_PREFIX:grade_assignment}
+
+    # 任务处理配置
+    task-config:
+      # 任务轮询间隔（秒）
+      poll-interval: ${GRADE_TASK_POLL_INTERVAL:5}
+
+      # 清理间隔（小时）
+      cleanup-interval: ${GRADE_TASK_CLEANUP_INTERVAL:6}
+
+      # 批处理大小
+      batch-size: ${GRADE_TASK_BATCH_SIZE:1000}
+
+      # 最大重试次数
+      max-retries: ${GRADE_TASK_MAX_RETRIES:3}
+
+      # 任务超时时间（分钟）
+      task-timeout: ${GRADE_TASK_TIMEOUT:30}
+
+    # 算法配置
+    algorithm-config:
+      # 并行处理线程数
+      parallel-threads: ${GRADE_ALGORITHM_PARALLEL_THREADS:4}
+
+      # 是否启用缓存
+      enable-cache: ${GRADE_ALGORITHM_ENABLE_CACHE:true}
+
+      # 计算精度（小数位数）
+      precision: ${GRADE_ALGORITHM_PRECISION:1}
+
+      # 是否启用详细日志
+      enable-detailed-logging: ${GRADE_ALGORITHM_ENABLE_DETAILED_LOGGING:false}

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.PfgjMapper">
+
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.PfgjEntity">
+        <id column="PFGJBS" property="pfgjbs" jdbcType="BIGINT"/>
+        <result column="KSJHDM" property="ksjhdm" jdbcType="VARCHAR"/>
+        <result column="LSH" property="lsh" jdbcType="VARCHAR"/>
+        <result column="YJXH" property="yjxh" jdbcType="BIGINT"/>
+        <result column="Itemid" property="itemid" jdbcType="INTEGER"/>
+        <result column="Mh" property="mh" jdbcType="VARCHAR"/>
+        <result column="Marksum" property="marksum" jdbcType="VARCHAR"/>
+        <result column="Submark" property="submark" jdbcType="VARCHAR"/>
+        <result column="Tasktype" property="tasktype" jdbcType="INTEGER"/>
+        <result column="Teacherid" property="teacherid" jdbcType="INTEGER"/>
+        <result column="CJRXM" property="cjrxm" jdbcType="VARCHAR"/>
+        <result column="CJRGZRYM" property="cjrgzrym" jdbcType="VARCHAR"/>
+        <result column="CJSJ" property="cjsj" jdbcType="TIMESTAMP"/>
+        <result column="GXRXM" property="gxrxm" jdbcType="VARCHAR"/>
+        <result column="GXRGZRYM" property="gxrgzrym" jdbcType="VARCHAR"/>
+        <result column="GXSJ" property="gxsj" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        PFGJBS, KSJHDM, LSH, YJXH, Itemid, Mh, Marksum, Submark, Tasktype, Teacherid,
+        CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ
+    </sql>
+
+    <!-- 批量插入评分轨迹数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO pfgj (
+        KSJHDM, LSH, YJXH, Itemid, Mh, Marksum, Submark, Tasktype, Teacherid,
+        CJRXM, CJRGZRYM, CJSJ
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.ksjhdm,jdbcType=VARCHAR},
+            #{item.lsh,jdbcType=VARCHAR},
+            #{item.yjxh,jdbcType=BIGINT},
+            #{item.itemid,jdbcType=INTEGER},
+            #{item.mh,jdbcType=VARCHAR},
+            #{item.marksum,jdbcType=VARCHAR},
+            #{item.submark,jdbcType=VARCHAR},
+            #{item.tasktype,jdbcType=INTEGER},
+            #{item.teacherid,jdbcType=INTEGER},
+            #{item.cjrxm,jdbcType=VARCHAR},
+            #{item.cjrgzrym,jdbcType=VARCHAR},
+            NOW()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据条件删除评分轨迹数据（用于覆盖导入） -->
+    <delete id="deleteByConditions">
+        DELETE FROM pfgj
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        <if test="lshList != null and lshList.size() > 0">
+            AND LSH IN
+            <foreach collection="lshList" item="lsh" open="(" separator="," close=")">
+                #{lsh,jdbcType=VARCHAR}
+            </foreach>
+        </if>
+        <if test="itemid != null">
+            AND Itemid = #{itemid,jdbcType=INTEGER}
+        </if>
+        <if test="tasktype != null">
+            AND Tasktype = #{tasktype,jdbcType=INTEGER}
+        </if>
+    </delete>
+
+    <!-- 根据考试计划代码和流水号查询评分轨迹 -->
+    <select id="selectByKsjhdmAndLsh" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pfgj
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        AND LSH = #{lsh,jdbcType=VARCHAR}
+        ORDER BY Itemid, Tasktype
+    </select>
+
+    <!-- 根据考试计划代码、大题序号和评次查询评分轨迹 -->
+    <select id="selectByKsjhdmAndItemidAndTasktype" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pfgj
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        <if test="itemid != null">
+            AND Itemid = #{itemid,jdbcType=INTEGER}
+        </if>
+        <if test="tasktype != null">
+            AND Tasktype = #{tasktype,jdbcType=INTEGER}
+        </if>
+        ORDER BY LSH, YJXH
+    </select>
+
+    <!-- 统计评分轨迹数量 -->
+    <select id="countByConditions" resultType="int">
+        SELECT COUNT(*)
+        FROM pfgj
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        <if test="itemid != null">
+            AND Itemid = #{itemid,jdbcType=INTEGER}
+        </if>
+        <if test="tasktype != null">
+            AND Tasktype = #{tasktype,jdbcType=INTEGER}
+        </if>
+    </select>
+
+    <!-- 根据阅卷序号和考试计划代码查询评分轨迹 -->
+    <select id="selectByYjxhAndKsjhdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pfgj
+        WHERE YJXH = #{yjxh,jdbcType=BIGINT}
+        AND KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        ORDER BY Itemid, Tasktype
+    </select>
+
+    <!-- 根据阅卷序号批量查询评分轨迹 -->
+    <select id="selectByYjxhList" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pfgj
+        WHERE KSJHDM = #{ksjhdm,jdbcType=VARCHAR}
+        <if test="yjxhList != null and yjxhList.size() > 0">
+            AND YJXH IN
+            <foreach collection="yjxhList" item="yjxh" open="(" separator="," close=")">
+                #{yjxh,jdbcType=BIGINT}
+            </foreach>
+        </if>
+        ORDER BY YJXH, Itemid, Tasktype
+    </select>
+
+</mapper>

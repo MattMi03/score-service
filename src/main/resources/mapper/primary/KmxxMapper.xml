@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.KmxxMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="edu.qhjy.score_service.domain.entity.KmxxEntity">
+        <id column="KMBS" property="kmbs" jdbcType="BIGINT"/>
+        <result column="KMDM" property="kmdm" jdbcType="VARCHAR"/>
+        <result column="KMMC" property="kmmc" jdbcType="VARCHAR"/>
+        <result column="KMLX" property="kmlx" jdbcType="TINYINT"/>
+        <result column="CJRXM" property="cjrxm" jdbcType="VARCHAR"/>
+        <result column="CJRGZRYM" property="cjrgzrym" jdbcType="VARCHAR"/>
+        <result column="CJSJ" property="cjsj" jdbcType="TIMESTAMP"/>
+        <result column="GXRXM" property="gxrxm" jdbcType="VARCHAR"/>
+        <result column="GXRGZRYM" property="gxrgzrym" jdbcType="VARCHAR"/>
+        <result column="GXSJ" property="gxsj" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段列表 -->
+    <sql id="Base_Column_List">
+        KMBS, KMDM, KMMC, KMLX, CJRXM, CJRGZRYM, CJSJ, GXRXM, GXRGZRYM, GXSJ
+    </sql>
+
+    <!-- 查询所有科目信息 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kmxx
+        ORDER BY KMDM
+    </select>
+
+    <!-- 根据科目名称查询科目信息 -->
+    <select id="selectByKmmc" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kmxx
+        WHERE KMMC = #{kmmc,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 根据科目代码查询科目信息 -->
+    <select id="selectByKmdm" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM kmxx
+        WHERE KMDM = #{kmdm,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 查询所有科目名称列表 -->
+    <select id="selectAllKmmc" resultType="java.lang.String">
+        SELECT KMMC
+        FROM kmxx
+        ORDER BY KMDM
+    </select>
+
+</mapper>

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.qhjy.score_service.mapper.primary.GraduationMapper">
+
+    <!-- 毕业条件实体结果映射 -->
+    <resultMap id="BytjResultMap" type="edu.qhjy.score_service.domain.entity.BytjEntity">
+        <id column="BYTJBS" property="bytjbs" jdbcType="BIGINT"/>
+        <result column="SZSMC" property="szsmc" jdbcType="VARCHAR"/>
+        <result column="KSKM" property="kskm" jdbcType="INTEGER"/>
+        <result column="KCKM" property="kckm" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 毕业生信息结果映射 -->
+    <resultMap id="GraduationStudentResultMap" type="edu.qhjy.score_service.domain.vo.GraduationStudentVO">
+        <result column="BYND" property="bynd" jdbcType="VARCHAR"/>
+        <result column="KSH" property="ksh" jdbcType="VARCHAR"/>
+        <result column="XM" property="xm" jdbcType="VARCHAR"/>
+        <result column="XB" property="xb" jdbcType="VARCHAR"/>
+        <result column="SZSMC" property="szsmc" jdbcType="VARCHAR"/>
+        <result column="KQMC" property="kqmc" jdbcType="VARCHAR"/>
+        <result column="XXMC" property="xxmc" jdbcType="VARCHAR"/>
+        <result column="KJZTMC" property="kjztmc" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 学生成绩结果映射 -->
+    <resultMap id="StudentScoreResultMap" type="edu.qhjy.score_service.domain.vo.StudentScoreVO">
+        <result column="KSH" property="ksh" jdbcType="VARCHAR"/>
+        <result column="KMMC" property="kmmc" jdbcType="VARCHAR"/>
+        <result column="KMLX" property="kmlx" jdbcType="INTEGER"/>
+        <result column="CJHGM" property="cjhgm" jdbcType="VARCHAR"/>
+        <result column="CJDJM" property="cjdjm" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 根据所在市名称查询毕业条件 -->
+    <select id="selectBytjBySzsmc" resultMap="BytjResultMap">
+        SELECT BYTJBS, SZSMC, KSKM, KCKM
+        FROM bytj
+        WHERE SZSMC = #{szsmc,jdbcType=VARCHAR}
+        LIMIT 1
+    </select>
+
+    <!-- 毕业生条件查询（分页） -->
+    <select id="selectGraduationStudents" resultMap="GraduationStudentResultMap">
+        SELECT
+        CAST(k.BYND AS VARCHAR(10)) AS BYND,
+        k.KSH,
+        k.XM,
+        k.XB,
+        k.SZSMC,
+        k.KQMC,
+        k.XXMC,
+        k.KJZTMC
+        FROM ksxx k
+        WHERE 1=1
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND k.SZSMC = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND k.KQMC = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND k.XXMC = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.ksh != null and query.ksh != ''">
+            AND k.KSH = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+        <if test="query.bynd != null and query.bynd != ''">
+            AND k.BYND = #{query.bynd,jdbcType=VARCHAR}
+            AND k.KJZTMC = '毕业'
+        </if>
+        <if test="query.bynd == null or query.bynd == ''">
+            <!-- 当bynd为空时，不限制考籍状态，支持查询所有状态的学生 -->
+            <!-- 移除 AND k.KJZTMC != '毕业' 条件，允许查询包括已毕业学生在内的所有学生 -->
+        </if>
+        <if test="query.sortField != null and query.sortField != '' and query.sortOrder != null and query.sortOrder != ''">
+            ORDER BY ${query.sortField} ${query.sortOrder}
+        </if>
+        <if test="query.sortField == null or query.sortField == ''">
+            ORDER BY k.KSH ASC
+        </if>
+        LIMIT #{query.offset,jdbcType=INTEGER}, #{query.pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 统计毕业生总数 -->
+    <select id="countGraduationStudents" resultType="int">
+        SELECT COUNT(1)
+        FROM ksxx k
+        WHERE 1=1
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND k.SZSMC = #{query.szsmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND k.KQMC = #{query.kqmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND k.XXMC = #{query.xxmc,jdbcType=VARCHAR}
+        </if>
+        <if test="query.ksh != null and query.ksh != ''">
+            AND k.KSH = #{query.ksh,jdbcType=VARCHAR}
+        </if>
+        <if test="query.bynd != null and query.bynd != ''">
+            AND k.BYND = #{query.bynd,jdbcType=VARCHAR}
+            AND k.KJZTMC = '毕业'
+        </if>
+        <if test="query.bynd == null or query.bynd == ''">
+            <!-- 当bynd为空时，不限制考籍状态，支持查询所有状态的学生 -->
+            <!-- 移除 AND k.KJZTMC != '毕业' 条件，允许查询包括已毕业学生在内的所有学生 -->
+        </if>
+    </select>
+
+    <!-- 查询学生的所有科目成绩 -->
+    <select id="selectStudentScores" resultMap="StudentScoreResultMap">
+        SELECT c.KSH,
+               c.KMMC,
+               c.KMLX,
+               c.CJHGM,
+               c.CJDJM
+        FROM kscj c
+        WHERE c.KSH = #{ksh,jdbcType=VARCHAR}
+        ORDER BY c.KMMC
+    </select>
+
+    <!-- 批量更新学生毕业状态 -->
+    <update id="batchUpdateGraduationStatus">
+        UPDATE ksxx
+        SET
+        BYND = #{bynd,jdbcType=VARCHAR},
+        KJZTMC = '毕业',
+        GXRXM = #{operatorName,jdbcType=VARCHAR},
+        GXRGZRYM = #{operatorCode,jdbcType=VARCHAR},
+        GXSJ = NOW()
+        WHERE KSH IN
+        <foreach collection="kshList" item="ksh" open="(" separator="," close=")">
+            #{ksh,jdbcType=VARCHAR}
+        </foreach>
+    </update>
+
+    <!-- 根据条件查询符合毕业条件的考生号列表 -->
+    <select id="selectQualifiedStudentKsh" resultType="java.lang.String">
+        SELECT DISTINCT k.KSH
+        FROM ksxx k
+        WHERE 1=1
+        <if test="szsmc != null and szsmc != ''">
+            AND k.SZSMC = #{szsmc,jdbcType=VARCHAR}
+        </if>
+        <if test="kqmc != null and kqmc != ''">
+            AND k.KQMC = #{kqmc,jdbcType=VARCHAR}
+        </if>
+        <if test="xxmc != null and xxmc != ''">
+            AND k.XXMC = #{xxmc,jdbcType=VARCHAR}
+        </if>
+        <if test="ksh != null and ksh != ''">
+            AND k.KSH = #{ksh,jdbcType=VARCHAR}
+        </if>
+        <!-- 查询正常在校或已毕业的学生，这些学生才有资格进行毕业审批 -->
+        AND (k.KJZTMC = '正常在校' OR k.KJZTMC = '毕业')
+    </select>
+
+    <!-- 统计考试科目合格数量 -->
+    <select id="countExamSubjectPass" resultType="int">
+        SELECT COUNT(DISTINCT c.KMMC)
+        FROM kscj c
+        WHERE c.KSH = #{ksh,jdbcType=VARCHAR}
+          AND c.KMLX = 0
+          AND c.CJHGM = '合格'
+    </select>
+
+    <!-- 统计考察科目合格数量 -->
+    <select id="countAssessmentSubjectPass" resultType="int">
+        SELECT COUNT(DISTINCT c.KMMC)
+        FROM kscj c
+        WHERE c.KSH = #{ksh,jdbcType=VARCHAR}
+          AND c.KMLX = 1
+          AND c.CJHGM = '合格'
+    </select>
+
+    <!-- 根据考生号查询学生考籍状态 -->
+    <select id="selectStudentKjztmc" resultType="java.lang.String">
+        SELECT k.KJZTMC
+        FROM ksxx k
+        WHERE k.KSH = #{ksh,jdbcType=VARCHAR}
+        LIMIT 1
+    </select>
+
+    <!-- 批量查询多个学生的成绩 -->
+    <select id="selectStudentScoresBatch" resultMap="StudentScoreResultMap">
+        SELECT
+        c.KSH,
+        c.KMMC,
+        c.KMLX,
+        c.CJHGM,
+        c.CJDJM
+        FROM kscj c
+        WHERE c.KSH IN
+        <foreach collection="kshList" item="ksh" open="(" separator="," close=")">
+            #{ksh,jdbcType=VARCHAR}
+        </foreach>
+        ORDER BY c.KSH, c.KMMC
+    </select>
+
+    <!-- 查询满足毕业条件的学生（数据库层面筛选） -->
+    <select id="selectQualifiedGraduationStudents" resultMap="GraduationStudentResultMap">
+        SELECT s.KSH, s.XM, s.SZSMC, s.KQMC, s.XXMC, s.BJMC, s.RXND, s.BYND, s.KJZTMC
+        FROM ksxx s
+        WHERE 1=1
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.SZSMC = #{query.szsmc}
+        </if>
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND s.KQMC = #{query.kqmc}
+        </if>
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.XXMC LIKE CONCAT('%', #{query.xxmc}, '%')
+        </if>
+        <if test="query.ksh != null and query.ksh != ''">
+            AND s.KSH LIKE CONCAT('%', #{query.ksh}, '%')
+        </if>
+        <if test="query.bynd != null and query.bynd != ''">
+            AND s.BYND = #{query.bynd}
+        </if>
+        AND (s.KJZTMC = '正常在校' OR s.KJZTMC = '毕业')
+        AND (
+        -- 考试科目合格数量统计
+        SELECT COUNT(DISTINCT c1.KMMC)
+        FROM kscj c1
+        WHERE c1.KSH = s.KSH
+        AND c1.KMLX = 0
+        AND c1.CJHGM = '合格'
+        ) >= #{kskm}
+        AND (
+        -- 考查科目合格数量统计
+        SELECT COUNT(DISTINCT c2.KMMC)
+        FROM kscj c2
+        WHERE c2.KSH = s.KSH
+        AND c2.KMLX = 1
+        AND c2.CJHGM = '合格'
+        ) >= #{kckm}
+        <choose>
+            <when test="query.sortField == 'xm'">
+                ORDER BY s.XM
+            </when>
+            <when test="query.sortField == 'bynd'">
+                ORDER BY s.BYND
+            </when>
+            <otherwise>
+                ORDER BY s.KSH
+            </otherwise>
+        </choose>
+        <if test="query.sortOrder == 'desc'">
+            DESC
+        </if>
+        <if test="query.sortOrder == 'asc' or query.sortOrder == null">
+            ASC
+        </if>
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <!-- 统计满足毕业条件的学生总数（数据库层面筛选） -->
+    <select id="countQualifiedGraduationStudents" resultType="int">
+        SELECT COUNT(*)
+        FROM ksxx s
+        WHERE 1=1
+        <if test="query.szsmc != null and query.szsmc != ''">
+            AND s.SZSMC = #{query.szsmc}
+        </if>
+        <if test="query.kqmc != null and query.kqmc != ''">
+            AND s.KQMC = #{query.kqmc}
+        </if>
+        <if test="query.xxmc != null and query.xxmc != ''">
+            AND s.XXMC LIKE CONCAT('%', #{query.xxmc}, '%')
+        </if>
+        <if test="query.ksh != null and query.ksh != ''">
+            AND s.KSH LIKE CONCAT('%', #{query.ksh}, '%')
+        </if>
+        <if test="query.bynd != null and query.bynd != ''">
+            AND s.BYND = #{query.bynd}
+        </if>
+        AND (s.KJZTMC = '正常在校' OR s.KJZTMC = '毕业')
+        AND (
+        -- 考试科目合格数量统计
+        SELECT COUNT(DISTINCT c1.KMMC)
+        FROM kscj c1
+        WHERE c1.KSH = s.KSH
+        AND c1.KMLX = 0
+        AND c1.CJHGM = '合格'
+        ) >= #{kskm}
+        AND (
+        -- 考查科目合格数量统计
+        SELECT COUNT(DISTINCT c2.KMMC)
+        FROM kscj c2
+        WHERE c2.KSH = s.KSH
+        AND c2.KMLX = 1
+        AND c2.CJHGM = '合格'
+        ) >= #{kckm}
+    </select>
+
+</mapper>
